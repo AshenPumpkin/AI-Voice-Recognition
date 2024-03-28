@@ -1,4 +1,4 @@
-AI Voice Recognize 🎙️
+# AI Voice Recognize 🎙️
 
 Overview:
 The AI Voice Recognize project is a collaborative effort by Guy Ben Ari and Ynon Friedman, fourth-year students at Afeka College of Engineering. The project focuses on developing a sophisticated system for detecting spoofed audio files, distinguishing them from genuine human voices. By employing cutting-edge techniques in machine learning and signal processing, our goal is to provide a robust solution for automatic speaker verification systems.
