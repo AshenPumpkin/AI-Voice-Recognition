@@ -1,0 +1,14 @@
+librosa
+matplotlib
+numpy
+pandas
+torch
+torchaudio
+scipy
+torchvision
+soundfile
+setuptools
+scikit-learn
+IPython
+transformers
+huggingface_hub
