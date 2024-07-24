@@ -1,25 +1,9 @@
+# First open terminal and run: pip install -r requirements.txt
+
 #imports
-import os
-import pandas as pd
-import soundfile as sf
-from soundfile import SoundFile
 import numpy as np
-import scipy
-import scipy.io.wavfile as wav
-import matplotlib.pyplot as plt
-from scipy.signal import spectrogram
 import librosa as lb
-import librosa.display as lbd
-from sklearn.model_selection import train_test_split
-import setuptools
 import torch
-from torch import nn
-from torch.utils.data import Dataset, DataLoader
-from sklearn.metrics import classification_report
-from sklearn.metrics import balanced_accuracy_score
-from IPython.display import clear_output
-import random
-from sklearn.metrics import f1_score
 from huggingface_hub import hf_hub_download
 from transformers import AutoModel, AutoTokenizer
 
