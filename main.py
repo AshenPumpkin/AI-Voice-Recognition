@@ -2,12 +2,14 @@
 
 # imports
 import subprocess
-import sys
 import numpy as np
 import librosa as lb
 import torch
 from huggingface_hub import hf_hub_download
 from transformers import AutoModel, AutoTokenizer
+import sys
+from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QMessageBox
+import os
 
 
 # needed funcs
@@ -15,47 +17,155 @@ def getSpecto(wavFile, sampleRate):
     # Compute mel spectrogram
     mel_spectrogram = lb.feature.melspectrogram(y=wavFile, sr=sampleRate)
     mel_spectrogram_db = lb.power_to_db(mel_spectrogram, ref=np.max)
-    # add channel num
-    melTemp = np.ones((1, mel_spectrogram_db.shape[0], mel_spectrogram_db.shape[1]), dtype=mel_spectrogram_db.dtype)
+
+    # Add channel dimension while preserving the actual values
+    melTemp = np.expand_dims(mel_spectrogram_db, axis=0)
+
     return melTemp
-
-
-# class voiceDB:
-#     def __init__(self, dataFrame):
-#         self.data = dataFrame
-#
-#     def __len__(self):
-#         return len(self.data)
-#
-#     def __getitem__(self, idx):
-#         tempPath = self.data.iloc[idx]['Path']
-#         voicePath = path_prefix + tempPath
-#         label = 1 if self.data.iloc[idx]['Label'] == 'bona-fide' else 0 if self.data.iloc[idx][
-#                                                                                'Label'] == 'spoof' else None
-#         wavFile, sampleRate = lb.load(voicePath)
-#
-#         max_length = 551052  # longest datapoint, 24 seconds
-#
-#         # Pad or truncate the audio file to ensure consistent length
-#         if len(wavFile) < max_length:
-#             # Pad with zeros if the length is less than the maximum length
-#             wavFile = np.pad(wavFile, (0, max_length - len(wavFile)), 'constant')
-#
-#         mel = getSpecto(wavFile, sampleRate)
-#
-#         if wavFile.dtype != np.float32:
-#             wavFile = wavFile.astype(np.float32)
-#         if not isinstance(sampleRate, np.float32):
-#             sampleRate = np.array([sampleRate], dtype=np.float32)
-#
-#         # Concatenate wavFile and sampleRate
-#         wavAndSamp = np.concatenate((wavFile, sampleRate))
-#
-#         return wavAndSamp, mel, label
 
 
 # Set your Hugging Face token if needed
 token = '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'
+
+
+class App(QWidget):
+    def __init__(self):
+        super().__init__()
+        self.initUI()
+
+    def initUI(self):
+        self.setWindowTitle('PyQt Example')
+        layout = QVBoxLayout()
+
+        open_button = QPushButton('Open Audio File', self)
+        open_button.clicked.connect(self.showDialog)
+        layout.addWidget(open_button)
+
+        self.setLayout(layout)
+        self.show()
+
+    def showDialog(self):
+        options = QFileDialog.Options()
+        file_path, _ = QFileDialog.getOpenFileName(self, "Open Audio File", "", "Audio Files (*.mp3 *.wav)",
+                                                   options=options)
+        if file_path:
+            result = query_function(file_path)
+            QMessageBox.information(self, "Result", result)
+
+
+def initialize():
+    # install_dependencies()
+    hf_token = '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'
+    # huggingface_login(hf_token)
+
+    # Repositories and filenames
+    voice_model_repo = 'gbenari2/voice'
+    specto_model_repo = 'gbenari2/specto'
+    # ensemble_model_repo = 'gbenari2/ensemble'
+    voice_model_filename = 'voiceModel.pth'
+    specto_model_filename = 'spectoModel.pth'
+    # ensemble_model_filename = 'ensembleModel.pth'
+
+    # Download the models
+    voice_model_path = download_model(voice_model_repo, voice_model_filename, token)
+    specto_model_path = download_model(specto_model_repo, specto_model_filename, token)
+    # ensemble_model_path = download_model(ensemble_model_repo, ensemble_model_filename, token)
+
+    # Load the models and map to CPU
+    specto_model = torch.load(specto_model_path, map_location=torch.device('cpu'))
+
+    # voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'))
+    # ensemble_model = torch.load(ensemble_model_path, map_location=torch.device('cpu'))
+
+    # save models to Models folder
+    # torch.save(voice_model, 'Models/voiceModel.pth')
+    torch.save(specto_model, 'Models/spectoModel.pth')
+    # torch.save(ensemble_model, 'Models/ensembleModel.pth')
+
+    print("Initialization complete")
+
+
+def main():
+    initialize()
+
+    app = QApplication(sys.argv)
+    ex = App()  # Create an instance of the App class, which initializes and shows the main window
+    sys.exit(app.exec_())  # Start the event loop
+
+
+def query_function(file_path):
+
+    print(file_path)
+    # load the audio file
+    wavFile, sampleRate = lb.load(file_path)
+
+    max_length = 551052  # longest datapoint, 24 seconds
+
+    # Pad or truncate the audio file to ensure consistent length
+    if len(wavFile) < max_length:
+        # Pad with zeros if the length is less than the maximum length
+        wavFile = np.pad(wavFile, (0, max_length - len(wavFile)), 'constant')
+
+    # run into models
+    mel = getSpecto(wavFile, sampleRate)
+    wavAndSamp = np.concatenate(wavFile, sampleRate)
+    wavAndSampT = torch.tensor(wavAndSamp)
+    melT = torch.tensor(mel)
+
+
+
+    # Load the models
+    specto_model = torch.load('Models/spectoModel.pth', map_location=torch.device('cpu'))
+    # voiceModel = torch.load('Models/voiceModel.pth', map_location=torch.device('cpu'))
+    # ensembleModel = torch.load('Models/ensembleModel.pth', map_location=torch.device('cpu'))
+
+    specto_model.eval()
+    # voiceModel.eval()
+    # ensembleModel.eval()
+
+
+    # run into specto
+    spectoInput = melT.unsqueeze(0)  # Add batch dimension
+    with torch.no_grad():
+        spectoOutput = specto_model(spectoInput)
+    print(spectoOutput)
+    spectoProbs = torch.exp(spectoOutput)
+    spectoProbs = spectoProbs / torch.sum(spectoProbs) * 100
+    spectoProbs_list = spectoProbs.cpu().numpy().flatten().tolist()
+    formatted_probs = [f"{prob:.2f}" for prob in spectoProbs_list]
+    print(formatted_probs)
+
+    # #run into voice
+    # voiceInput = wavAndSampT.unsqueeze(0)  # Add batch dimension
+    # with torch.no_grad():
+    #     voiceOutput = voiceModel(voiceInput)
+    # voiceProbs = torch.exp(voiceOutput)
+    # voiceProbs = voiceProbs / torch.sum(voiceProbs) * 100
+    # voiceProbs_list = voiceProbs.cpu().numpy().flatten().tolist()
+    # formatted_voice_probs = [f"{prob:.2f}" for prob in voiceProbs_list]
+    # print(formatted_voice_probs)
+
+    # #run into ensemble
+    # ensembleInput = torch.tensor([spectoProbs_list, voiceProbs_list], dtype=torch.float32)
+    # ensembleInput = ensembleInput.unsqueeze(0)  # Add batch dimension and move to device
+    # with torch.no_grad():
+    #     ensembleOutput = ensembleModel(ensembleInput)
+    # ensembleProbs = torch.exp(ensembleOutput)
+    # ensembleProbs = ensembleProbs / torch.sum(ensembleProbs) * 100
+    # ensembleProbs_list = ensembleProbs.cpu().numpy().flatten().tolist()
+    # formatted_ensemble_probs = [f"{prob:.2f}" for prob in ensembleProbs_list]
+    # print(formatted_ensemble_probs)
+
+    #
+    # #process output and return
+    # if ensembleProbs[1] > ensembleProbs[0]:
+    #     return "The audio file is spoof."
+    # else:
+    #     return "The audio file is bona-fide."
+    os.remove("Models/spectoModel.pth")
+    # os.remove("Models/voiceModel.pth")
+    # os.remove("Models/ensembleModel.pth")
+    return "formatted_probs"
 
 
 # Function to download a file from Hugging Face Hub
@@ -106,99 +216,5 @@ def huggingface_login(token):
 
 # Main.
 if __name__ == '__main__':
-    # install_dependencies()
-    print("debug: dependencies")
-    hf_token = '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'
-    # huggingface_login(hf_token)
-    print("debug: HuggingFace")
 
-    # Repositories and filenames
-    voice_model_repo = 'gbenari2/voice'
-    specto_model_repo = 'gbenari2/specto'
-    # ensemble_model_repo = 'gbenari2/ensemble'
-    voice_model_filename = 'voiceModel.pth'
-    specto_model_filename = 'spectoModel.pth'
-    # ensemble_model_filename = 'ensembleModel.pth'
-
-    # Download the models
-    voice_model_path = download_model(voice_model_repo, voice_model_filename, token)
-    print("debug: voice_model_path")
-    specto_model_path = download_model(specto_model_repo, specto_model_filename, token)
-    print("debug: specto_model_path")
-    # ensemble_model_path = download_model(ensemble_model_repo, ensemble_model_filename, token)
-
-    # Load the models and map to CPU
-    voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'))
-
-    specto_model = torch.load(specto_model_path, map_location=torch.device('cpu'))
-    # ensemble_model = torch.load(ensemble_model_path, map_location=torch.device('cpu'))
-
-    # save models to Models folder
-    torch.save(voice_model, 'Models/voiceModel.pth')
-    torch.save(specto_model, 'Models/spectoModel.pth')
-    # torch.save(ensemble_model, 'Models/ensembleModel.pth')
-
-    # Ensure the models are in evaluation mode
-    voice_model.eval()
-    specto_model.eval()
-    # ensemble_model.eval()
-
-    tempHardcode = "C:/Users/guybe/OneDrive/other/f_audio.mp3"
-
-    # request user input for path to the audio file
-    # audioPath = input("Please enter the path to the audio file: ")
-
-    # load the audio file
-    wavFile, sampleRate = lb.load(tempHardcode)
-
-    max_length = 551052  # longest datapoint, 24 seconds
-
-    # Pad or truncate the audio file to ensure consistent length
-    if len(wavFile) < max_length:
-        # Pad with zeros if the length is less than the maximum length
-        wavFile = np.pad(wavFile, (0, max_length - len(wavFile)), 'constant')
-
-    # run into models
-    mel = getSpecto(wavFile, sampleRate)
-    wavAndSamp = np.concatenate(wavFile, sampleRate)
-    wavAndSampT = torch.tensor(wavAndSamp)
-    melT = torch.tensor(mel)
-
-    # run into specto
-    spectoInput = melT.unsqueeze(0)  # Add batch dimension
-    with torch.no_grad():
-        spectoOutput = specto_model(spectoInput)
-    print(spectoOutput)
-    spectoProbs = torch.exp(spectoOutput)
-    spectoProbs = spectoProbs / torch.sum(spectoProbs) * 100
-    spectoProbs_list = spectoProbs.cpu().numpy().flatten().tolist()
-    formatted_probs = [f"{prob:.2f}" for prob in spectoProbs_list]
-    print(formatted_probs)
-
-    # #run into voice
-    # voiceInput = wavAndSampT.unsqueeze(0)  # Add batch dimension
-    # with torch.no_grad():
-    #     voiceOutput = voiceModel(voiceInput)
-    # voiceProbs = torch.exp(voiceOutput)
-    # voiceProbs = voiceProbs / torch.sum(voiceProbs) * 100
-    # voiceProbs_list = voiceProbs.cpu().numpy().flatten().tolist()
-    # formatted_voice_probs = [f"{prob:.2f}" for prob in voiceProbs_list]
-    # print(formatted_voice_probs)
-
-    # #run into ensemble
-    # ensembleInput = torch.tensor([spectoProbs_list, voiceProbs_list], dtype=torch.float32)
-    # ensembleInput = ensembleInput.unsqueeze(0)  # Add batch dimension and move to device
-    # with torch.no_grad():
-    #     ensembleOutput = ensembleModel(ensembleInput)
-    # ensembleProbs = torch.exp(ensembleOutput)
-    # ensembleProbs = ensembleProbs / torch.sum(ensembleProbs) * 100
-    # ensembleProbs_list = ensembleProbs.cpu().numpy().flatten().tolist()
-    # formatted_ensemble_probs = [f"{prob:.2f}" for prob in ensembleProbs_list]
-    # print(formatted_ensemble_probs)
-
-    #
-    # #process output and return
-    # if ensembleProbs[1] > ensembleProbs[0]:
-    #     print("The audio file is spoof.")
-    # else:
-    #     print("The audio file is not spoof.")
+    main()

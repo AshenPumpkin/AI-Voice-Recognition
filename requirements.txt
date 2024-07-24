@@ -12,3 +12,4 @@ scikit-learn
 IPython
 transformers
 huggingface_hub
+PyQt5
