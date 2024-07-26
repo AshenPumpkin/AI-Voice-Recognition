@@ -51,16 +51,16 @@ class App(QWidget):
 
 def initialize():
     # install_dependencies()
+    #subprocess.run([sys.executable, '-m', 'huggingface-cli', 'login'], check=True)
     hf_login_token = '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'
     # Set your Hugging Face hf_models_token if needed
     hf_models_token = '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'
-    # huggingface_login(hf_login_token)
+    #huggingface_login(hf_login_token)
 
     # Repositories and filenames
     voice_model_repo = 'gbenari2/voice'
     specto_model_repo = 'gbenari2/specto'
     ensemble_model_repo = 'gbenari2/ensemble'
-
     voice_model_filename = 'voiceModel.pth'
     specto_model_filename = 'spectoModel.pth'
     ensemble_model_filename = 'ensembleModel.pth'
@@ -74,15 +74,21 @@ def initialize():
     voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'))
     specto_model = torch.load(specto_model_path, map_location=torch.device('cpu'))
     ensemble_model = torch.load(ensemble_model_path, map_location=torch.device('cpu'))
+    print("load")
+
 
     voice_model.eval()
     specto_model.eval()
     ensemble_model.eval()
+    print("eval")
+
 
     # save models to Models folder
     torch.save(voice_model, 'Models/voiceModel.pth')
     torch.save(specto_model, 'Models/spectoModel.pth')
     torch.save(ensemble_model, 'Models/ensembleModel.pth')
+    print("save")
+
 
     print("Initialization complete")
 
