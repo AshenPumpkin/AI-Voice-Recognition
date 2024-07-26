@@ -114,6 +114,11 @@ def query_function(file_path):
     wavAndSampT = torch.tensor(wavAndSamp)
     melT = torch.tensor(mel)
 
+    # Load the models and map to CPU
+    voice_model = torch.load("Models/voice_Model.pth", map_location=torch.device('cpu'))
+    specto_model = torch.load("Models/specto_Model.pth", map_location=torch.device('cpu'))
+    ensemble_model = torch.load("Models/ensemble_Model.pth", map_location=torch.device('cpu'))
+
     # run into specto
     spectoInput = melT.unsqueeze(0)  # Add batch dimension
     with torch.no_grad():
@@ -125,36 +130,35 @@ def query_function(file_path):
     formatted_probs = [f"{prob:.2f}" for prob in spectoProbs_list]
     print(formatted_probs)
 
-    # #run into voice
-    # voiceInput = wavAndSampT.unsqueeze(0)  # Add batch dimension
-    # with torch.no_grad():
-    #     voiceOutput = voiceModel(voiceInput)
-    # voiceProbs = torch.exp(voiceOutput)
-    # voiceProbs = voiceProbs / torch.sum(voiceProbs) * 100
-    # voiceProbs_list = voiceProbs.cpu().numpy().flatten().tolist()
-    # formatted_voice_probs = [f"{prob:.2f}" for prob in voiceProbs_list]
-    # print(formatted_voice_probs)
+    #run into voice
+    voiceInput = wavAndSampT.unsqueeze(0)  # Add batch dimension
+    with torch.no_grad():
+        voiceOutput = voice_model(voiceInput)
+    voiceProbs = torch.exp(voiceOutput)
+    voiceProbs = voiceProbs / torch.sum(voiceProbs) * 100
+    voiceProbs_list = voiceProbs.cpu().numpy().flatten().tolist()
+    formatted_voice_probs = [f"{prob:.2f}" for prob in voiceProbs_list]
+    print(formatted_voice_probs)
 
-    # #run into ensemble
-    # ensembleInput = torch.tensor([spectoProbs_list, voiceProbs_list], dtype=torch.float32)
-    # ensembleInput = ensembleInput.unsqueeze(0)  # Add batch dimension and move to device
-    # with torch.no_grad():
-    #     ensembleOutput = ensembleModel(ensembleInput)
-    # ensembleProbs = torch.exp(ensembleOutput)
-    # ensembleProbs = ensembleProbs / torch.sum(ensembleProbs) * 100
-    # ensembleProbs_list = ensembleProbs.cpu().numpy().flatten().tolist()
-    # formatted_ensemble_probs = [f"{prob:.2f}" for prob in ensembleProbs_list]
-    # print(formatted_ensemble_probs)
+    #run into ensemble
+    ensembleInput = torch.tensor([spectoProbs_list, voiceProbs_list], dtype=torch.float32)
+    ensembleInput = ensembleInput.unsqueeze(0)  # Add batch dimension and move to device
+    with torch.no_grad():
+        ensembleOutput = ensemble_model(ensembleInput)
+    ensembleProbs = torch.exp(ensembleOutput)
+    ensembleProbs = ensembleProbs / torch.sum(ensembleProbs) * 100
+    ensembleProbs_list = ensembleProbs.cpu().numpy().flatten().tolist()
+    formatted_ensemble_probs = [f"{prob:.2f}" for prob in ensembleProbs_list]
+    print(formatted_ensemble_probs)
 
-    #
-    # #process output and return
-    # if ensembleProbs[1] > ensembleProbs[0]:
-    #     return "The audio file is spoof."
-    # else:
-    #     return "The audio file is bona-fide."
-    os.remove("Models/spectoModel.pth")
-    # os.remove("Models/voiceModel.pth")
-    # os.remove("Models/ensembleModel.pth")
+        #process output and return
+    if ensembleProbs[1] > ensembleProbs[0]:
+        return "The audio file is spoof."
+    else:
+        return "The audio file is bona-fide."
+    os.remove("Models/specto_Model.pth")
+    os.remove("Models/voice_Model.pth")
+    os.remove("Models/ensemble_Model.pth")
     return "formatted_probs"
 
 
@@ -206,5 +210,4 @@ def huggingface_login(token):
 
 # Main.
 if __name__ == '__main__':
-
     main()
