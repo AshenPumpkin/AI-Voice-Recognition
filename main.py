@@ -24,10 +24,6 @@ def getSpecto(wavFile, sampleRate):
     return melTemp
 
 
-# Set your Hugging Face token if needed
-token = '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'
-
-
 class App(QWidget):
     def __init__(self):
         super().__init__()
@@ -55,32 +51,38 @@ class App(QWidget):
 
 def initialize():
     # install_dependencies()
-    hf_token = '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'
-    # huggingface_login(hf_token)
+    hf_login_token = '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'
+    # Set your Hugging Face hf_models_token if needed
+    hf_models_token = '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'
+    # huggingface_login(hf_login_token)
 
     # Repositories and filenames
     voice_model_repo = 'gbenari2/voice'
     specto_model_repo = 'gbenari2/specto'
-    # ensemble_model_repo = 'gbenari2/ensemble'
+    ensemble_model_repo = 'gbenari2/ensemble'
+
     voice_model_filename = 'voiceModel.pth'
     specto_model_filename = 'spectoModel.pth'
-    # ensemble_model_filename = 'ensembleModel.pth'
+    ensemble_model_filename = 'ensembleModel.pth'
 
     # Download the models
-    voice_model_path = download_model(voice_model_repo, voice_model_filename, token)
-    specto_model_path = download_model(specto_model_repo, specto_model_filename, token)
-    # ensemble_model_path = download_model(ensemble_model_repo, ensemble_model_filename, token)
+    voice_model_path = download_model(voice_model_repo, voice_model_filename, hf_models_token)
+    specto_model_path = download_model(specto_model_repo, specto_model_filename, hf_models_token)
+    ensemble_model_path = download_model(ensemble_model_repo, ensemble_model_filename, hf_models_token)
 
     # Load the models and map to CPU
+    voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'))
     specto_model = torch.load(specto_model_path, map_location=torch.device('cpu'))
+    ensemble_model = torch.load(ensemble_model_path, map_location=torch.device('cpu'))
 
-    # voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'))
-    # ensemble_model = torch.load(ensemble_model_path, map_location=torch.device('cpu'))
+    voice_model.eval()
+    specto_model.eval()
+    ensemble_model.eval()
 
     # save models to Models folder
-    # torch.save(voice_model, 'Models/voiceModel.pth')
+    torch.save(voice_model, 'Models/voiceModel.pth')
     torch.save(specto_model, 'Models/spectoModel.pth')
-    # torch.save(ensemble_model, 'Models/ensembleModel.pth')
+    torch.save(ensemble_model, 'Models/ensembleModel.pth')
 
     print("Initialization complete")
 
@@ -111,18 +113,6 @@ def query_function(file_path):
     wavAndSamp = np.concatenate(wavFile, sampleRate)
     wavAndSampT = torch.tensor(wavAndSamp)
     melT = torch.tensor(mel)
-
-
-
-    # Load the models
-    specto_model = torch.load('Models/spectoModel.pth', map_location=torch.device('cpu'))
-    # voiceModel = torch.load('Models/voiceModel.pth', map_location=torch.device('cpu'))
-    # ensembleModel = torch.load('Models/ensembleModel.pth', map_location=torch.device('cpu'))
-
-    specto_model.eval()
-    # voiceModel.eval()
-    # ensembleModel.eval()
-
 
     # run into specto
     spectoInput = melT.unsqueeze(0)  # Add batch dimension
