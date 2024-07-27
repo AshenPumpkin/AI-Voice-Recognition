@@ -1,63 +1,57 @@
-# First open terminal and run: pip install -r requirements.txt
+# First, open terminal and run: pip install -r requirements.txt
 
-# imports
+# Imports
+import os
+import sys
 import subprocess
 import numpy as np
 import librosa as lb
 import torch
 from huggingface_hub import hf_hub_download
-from transformers import AutoModel, AutoTokenizer
-import sys
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QMessageBox
-import os
 
 
-# needed funcs
-def getSpecto(wavFile, sampleRate):
-    # Compute mel spectrogram
-    mel_spectrogram = lb.feature.melspectrogram(y=wavFile, sr=sampleRate)
+# Utility function to compute mel spectrogram
+def get_spectrogram(wav_file, sample_rate):
+    mel_spectrogram = lb.feature.melspectrogram(y=wav_file, sr=sample_rate)
     mel_spectrogram_db = lb.power_to_db(mel_spectrogram, ref=np.max)
-
-    # Add channel dimension while preserving the actual values
-    melTemp = np.expand_dims(mel_spectrogram_db, axis=0)
-
-    return melTemp
+    return np.expand_dims(mel_spectrogram_db, axis=0)
 
 
-class App(QWidget):
+class AudioClassifierApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.initUI()
+        self.init_ui()
 
-    def initUI(self):
-        self.setWindowTitle('PyQt Example')
+    def init_ui(self):
+        self.setWindowTitle('Audio Classifier')
         layout = QVBoxLayout()
 
         open_button = QPushButton('Open Audio File', self)
-        open_button.clicked.connect(self.showDialog)
+        open_button.clicked.connect(self.show_dialog)
         layout.addWidget(open_button)
 
         self.setLayout(layout)
         self.show()
 
-    def showDialog(self):
+    def show_dialog(self):
         options = QFileDialog.Options()
-        file_path, _ = QFileDialog.getOpenFileName(self, "Open Audio File", "", "Audio Files (*.mp3 *.wav)",
-                                                   options=options)
+        file_path, _ = QFileDialog.getOpenFileName(
+            self,
+            "Open Audio File",
+            "",
+            "Audio Files (*.mp3 *.wav)",
+            options=options
+        )
         if file_path:
             result = query_function(file_path)
             QMessageBox.information(self, "Result", result)
 
 
-def initialize():
-    # install_dependencies()
-    #subprocess.run([sys.executable, '-m', 'huggingface-cli', 'login'], check=True)
+def initialize_models():
     hf_login_token = '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'
-    # Set your Hugging Face hf_models_token if needed
     hf_models_token = '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'
-    #huggingface_login(hf_login_token)
 
-    # Repositories and filenames
     voice_model_repo = 'gbenari2/voice'
     specto_model_repo = 'gbenari2/specto'
     ensemble_model_repo = 'gbenari2/ensemble'
@@ -71,117 +65,112 @@ def initialize():
     ensemble_model_path = download_model(ensemble_model_repo, ensemble_model_filename, hf_models_token)
 
     # Load the models and map to CPU
-    voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'))
     specto_model = torch.load(specto_model_path, map_location=torch.device('cpu'))
     ensemble_model = torch.load(ensemble_model_path, map_location=torch.device('cpu'))
-    print("load")
 
-
-    voice_model.eval()
     specto_model.eval()
     ensemble_model.eval()
-    print("eval")
 
-
-    # save models to Models folder
-    torch.save(voice_model, 'Models/voiceModel.pth')
-    torch.save(specto_model, 'Models/spectoModel.pth')
-    torch.save(ensemble_model, 'Models/ensembleModel.pth')
-    print("save")
-
+    # Save models to Models folder
+    torch.save(specto_model, 'Models/specto_model.pth')
+    torch.save(ensemble_model, 'Models/ensemble_model.pth')
 
     print("Initialization complete")
 
 
 def main():
-    initialize()
+    initialize_models()
 
     app = QApplication(sys.argv)
-    ex = App()  # Create an instance of the App class, which initializes and shows the main window
-    sys.exit(app.exec_())  # Start the event loop
+    ex = AudioClassifierApp()
+    sys.exit(app.exec_())
 
 
 def query_function(file_path):
+    """
+    Process the audio file and classify it using pre-trained models.
 
-    print(file_path)
-    # load the audio file
-    wavFile, sampleRate = lb.load(file_path)
+    Args:
+        file_path (str): Path to the audio file.
+
+    Returns:
+        str: Classification result.
+    """
+    wav_file, sample_rate = lb.load(file_path)
 
     max_length = 551052  # longest datapoint, 24 seconds
 
     # Pad or truncate the audio file to ensure consistent length
-    if len(wavFile) < max_length:
-        # Pad with zeros if the length is less than the maximum length
-        wavFile = np.pad(wavFile, (0, max_length - len(wavFile)), 'constant')
+    if len(wav_file) < max_length:
+        wav_file = np.pad(wav_file, (0, max_length - len(wav_file)), 'constant')
 
-    # run into models
-    mel = getSpecto(wavFile, sampleRate)
-    wavAndSamp = np.concatenate(wavFile, sampleRate)
-    wavAndSampT = torch.tensor(wavAndSamp)
-    melT = torch.tensor(mel)
+    # Run the audio through models
+    mel = get_spectrogram(wav_file, sample_rate)
+    wav_and_samp = np.concatenate([wav_file, [sample_rate]])
+    wav_and_samp_t = torch.tensor(wav_and_samp)
+    mel_t = torch.tensor(mel)
 
     # Load the models and map to CPU
-    voice_model = torch.load("Models/voice_Model.pth", map_location=torch.device('cpu'))
-    specto_model = torch.load("Models/specto_Model.pth", map_location=torch.device('cpu'))
-    ensemble_model = torch.load("Models/ensemble_Model.pth", map_location=torch.device('cpu'))
+    voice_model = torch.load("Models/voice_model.pth", map_location=torch.device('cpu'))
+    specto_model = torch.load("Models/specto_model.pth", map_location=torch.device('cpu'))
+    ensemble_model = torch.load("Models/ensemble_model.pth", map_location=torch.device('cpu'))
 
-    # run into specto
-    spectoInput = melT.unsqueeze(0)  # Add batch dimension
+    # Run into specto model
+    specto_input = mel_t.unsqueeze(0)  # Add batch dimension
     with torch.no_grad():
-        spectoOutput = specto_model(spectoInput)
-    print(spectoOutput)
-    spectoProbs = torch.exp(spectoOutput)
-    spectoProbs = spectoProbs / torch.sum(spectoProbs) * 100
-    spectoProbs_list = spectoProbs.cpu().numpy().flatten().tolist()
-    formatted_probs = [f"{prob:.2f}" for prob in spectoProbs_list]
-    print(formatted_probs)
+        specto_output = specto_model(specto_input)
+    specto_probs = torch.exp(specto_output)
+    specto_probs = specto_probs / torch.sum(specto_probs) * 100
+    specto_probs_list = specto_probs.cpu().numpy().flatten().tolist()
 
-    #run into voice
-    voiceInput = wavAndSampT.unsqueeze(0)  # Add batch dimension
+    # Run into voice model
+    voice_input = wav_and_samp_t.unsqueeze(0)  # Add batch dimension
     with torch.no_grad():
-        voiceOutput = voice_model(voiceInput)
-    voiceProbs = torch.exp(voiceOutput)
-    voiceProbs = voiceProbs / torch.sum(voiceProbs) * 100
-    voiceProbs_list = voiceProbs.cpu().numpy().flatten().tolist()
-    formatted_voice_probs = [f"{prob:.2f}" for prob in voiceProbs_list]
-    print(formatted_voice_probs)
+        voice_output = voice_model(voice_input)
+    voice_probs = torch.exp(voice_output)
+    voice_probs = voice_probs / torch.sum(voice_probs) * 100
+    voice_probs_list = voice_probs.cpu().numpy().flatten().tolist()
 
-    #run into ensemble
-    ensembleInput = torch.tensor([spectoProbs_list, voiceProbs_list], dtype=torch.float32)
-    ensembleInput = ensembleInput.unsqueeze(0)  # Add batch dimension and move to device
+    # Run into ensemble model
+    ensemble_input = torch.tensor([specto_probs_list, voice_probs_list], dtype=torch.float32)
+    ensemble_input = ensemble_input.unsqueeze(0)  # Add batch dimension and move to device
     with torch.no_grad():
-        ensembleOutput = ensemble_model(ensembleInput)
-    ensembleProbs = torch.exp(ensembleOutput)
-    ensembleProbs = ensembleProbs / torch.sum(ensembleProbs) * 100
-    ensembleProbs_list = ensembleProbs.cpu().numpy().flatten().tolist()
-    formatted_ensemble_probs = [f"{prob:.2f}" for prob in ensembleProbs_list]
-    print(formatted_ensemble_probs)
+        ensemble_output = ensemble_model(ensemble_input)
+    ensemble_probs = torch.exp(ensemble_output)
+    ensemble_probs = ensemble_probs / torch.sum(ensemble_probs) * 100
+    ensemble_probs_list = ensemble_probs.cpu().numpy().flatten().tolist()
 
-        #process output and return
-    if ensembleProbs[1] > ensembleProbs[0]:
-        return "The audio file is spoof."
-    else:
-        return "The audio file is bona-fide."
-    os.remove("Models/specto_Model.pth")
-    os.remove("Models/voice_Model.pth")
-    os.remove("Models/ensemble_Model.pth")
-    return "formatted_probs"
+    # Process output and return result
+    result = "The audio file is spoof." if ensemble_probs_list[1] > ensemble_probs_list[
+        0] else "The audio file is bona-fide."
+
+    # Clean up models
+    os.remove("Models/specto_model.pth")
+    os.remove("Models/voice_model.pth")
+    os.remove("Models/ensemble_model.pth")
+
+    return result
 
 
-# Function to download a file from Hugging Face Hub
 def download_model(repo_id, filename, token):
-    file_path = hf_hub_download(repo_id=repo_id, filename=filename, use_auth_token=token)
-    return file_path
+    """
+    Download a model from Hugging Face Hub.
 
+    Args:
+        repo_id (str): Repository ID.
+        filename (str): Filename to download.
+        token (str): Hugging Face token.
 
-# Function to load a model from Hugging Face
-def load_model(repo_name, token):
-    model = AutoModel.from_pretrained(repo_name, use_auth_token=token)
-    tokenizer = AutoTokenizer.from_pretrained(repo_name, use_auth_token=token)
-    return model, tokenizer
+    Returns:
+        str: File path of the downloaded model.
+    """
+    return hf_hub_download(repo_id=repo_id, filename=filename, use_auth_token=token)
 
 
 def install_dependencies():
+    """
+    Install required dependencies from requirements.txt.
+    """
     try:
         subprocess.run([sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'], check=True)
         print("Dependencies installed successfully.")
@@ -191,19 +180,22 @@ def install_dependencies():
 
 
 def huggingface_login(token):
+    """
+    Login to Hugging Face using the provided token.
+
+    Args:
+        token (str): Hugging Face token.
+    """
     try:
-        # Start the huggingface-cli login process
         process = subprocess.Popen(
-            ['C:\\Users\\guybe\\PycharmProjects\\AI-Voice-Recognition\\venv\\Scripts\\huggingface-cli.exe', 'login'],
+            ['huggingface-cli', 'login'],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
-        # Send the token to the process's stdin
         stdout, stderr = process.communicate(input=token + '\n')
 
-        # Check for errors
         if process.returncode == 0:
             print("Hugging Face login completed successfully.")
         else:
@@ -214,6 +206,5 @@ def huggingface_login(token):
         print(e)
 
 
-# Main.
 if __name__ == '__main__':
     main()
