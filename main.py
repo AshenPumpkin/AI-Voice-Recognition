@@ -44,8 +44,16 @@ class AudioClassifierApp(QWidget):
             options=options
         )
         if file_path:
-            result = query_function(file_path)
-            QMessageBox.information(self, "Result", result)
+            print(f"Selected file: {file_path}")  # Debug line
+            try:
+                result = query_function(file_path)
+                QMessageBox.information(self, "Result", result)
+                print("Classification result:", result)
+            except Exception as e:
+                QMessageBox.critical(self, "Error", f"An error occurred: {e}")
+                print(f"Error during classification: {e}")
+
+
 
 
 def initialize_models():
@@ -65,13 +73,25 @@ def initialize_models():
     ensemble_model_path = download_model(ensemble_model_repo, ensemble_model_filename, hf_models_token)
 
     # Load the models and map to CPU
+    #voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'))
     specto_model = torch.load(specto_model_path, map_location=torch.device('cpu'))
     ensemble_model = torch.load(ensemble_model_path, map_location=torch.device('cpu'))
 
+    # Set models to evaluation mode
+    #voice_model.eval()
     specto_model.eval()
     ensemble_model.eval()
 
+    # Define the path to the folder
+    folder_path = 'Models'
+
+    # Check if the folder exists
+    if not os.path.exists(folder_path):
+        # Create the folder if it does not exist
+        os.makedirs(folder_path)
+
     # Save models to Models folder
+    #torch.save(voice_model, 'Models/voice_model.pth')
     torch.save(specto_model, 'Models/specto_model.pth')
     torch.save(ensemble_model, 'Models/ensemble_model.pth')
 
@@ -80,6 +100,9 @@ def initialize_models():
 
 def main():
     initialize_models()
+    test_file = "C:\\Users\\guybe\\OneDrive\\שולחן העבודה\\אפקה\\פרויקט גמר\\website\\11-real.wav"  # Replace with a valid file path
+    result = query_function(test_file)
+    print("test_file result:", result)
 
     app = QApplication(sys.argv)
     ex = AudioClassifierApp()
@@ -111,7 +134,7 @@ def query_function(file_path):
     mel_t = torch.tensor(mel)
 
     # Load the models and map to CPU
-    voice_model = torch.load("Models/voice_model.pth", map_location=torch.device('cpu'))
+    #voice_model = torch.load("Models/voice_model.pth", map_location=torch.device('cpu'))
     specto_model = torch.load("Models/specto_model.pth", map_location=torch.device('cpu'))
     ensemble_model = torch.load("Models/ensemble_model.pth", map_location=torch.device('cpu'))
 
@@ -122,33 +145,38 @@ def query_function(file_path):
     specto_probs = torch.exp(specto_output)
     specto_probs = specto_probs / torch.sum(specto_probs) * 100
     specto_probs_list = specto_probs.cpu().numpy().flatten().tolist()
+    print(specto_probs_list)
 
-    # Run into voice model
-    voice_input = wav_and_samp_t.unsqueeze(0)  # Add batch dimension
-    with torch.no_grad():
-        voice_output = voice_model(voice_input)
-    voice_probs = torch.exp(voice_output)
-    voice_probs = voice_probs / torch.sum(voice_probs) * 100
-    voice_probs_list = voice_probs.cpu().numpy().flatten().tolist()
+    # # Run into voice model
+    # voice_input = wav_and_samp_t.unsqueeze(0)  # Add batch dimension
+    # with torch.no_grad():
+    #     voice_output = voice_model(voice_input)
+    # voice_probs = torch.exp(voice_output)
+    # voice_probs = voice_probs / torch.sum(voice_probs) * 100
+    # voice_probs_list = voice_probs.cpu().numpy().flatten().tolist()
 
-    # Run into ensemble model
-    ensemble_input = torch.tensor([specto_probs_list, voice_probs_list], dtype=torch.float32)
-    ensemble_input = ensemble_input.unsqueeze(0)  # Add batch dimension and move to device
-    with torch.no_grad():
-        ensemble_output = ensemble_model(ensemble_input)
-    ensemble_probs = torch.exp(ensemble_output)
-    ensemble_probs = ensemble_probs / torch.sum(ensemble_probs) * 100
-    ensemble_probs_list = ensemble_probs.cpu().numpy().flatten().tolist()
+    # # Run into ensemble model
+    # ensemble_input = torch.tensor([specto_probs_list, voice_probs_list], dtype=torch.float32)
+    # ensemble_input = ensemble_input.unsqueeze(0)  # Add batch dimension and move to device
+    # with torch.no_grad():
+    #     ensemble_output = ensemble_model(ensemble_input)
+    # ensemble_probs = torch.exp(ensemble_output)
+    # ensemble_probs = ensemble_probs / torch.sum(ensemble_probs) * 100
+    # ensemble_probs_list = ensemble_probs.cpu().numpy().flatten().tolist()
 
-    # Process output and return result
-    result = "The audio file is spoof." if ensemble_probs_list[1] > ensemble_probs_list[
-        0] else "The audio file is bona-fide."
+    # # Process output and return result
+    # result = "The audio file is spoof." if ensemble_probs_list[1] > ensemble_probs_list[
+    #     0] else "The audio file is bona-fide."
+
+    result = "The audio file is spoof." if specto_probs_list[1] > specto_probs_list[
+         0] else "The audio file is bona-fide."
 
     # Clean up models
-    os.remove("Models/specto_model.pth")
-    os.remove("Models/voice_model.pth")
-    os.remove("Models/ensemble_model.pth")
+    #os.remove("Models/specto_model.pth")
+    #os.remove("Models/voice_model.pth")
+    #os.remove("Models/ensemble_model.pth")
 
+    # return result #to change
     return result
 
 
