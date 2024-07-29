@@ -1,17 +1,16 @@
-# First, open terminal and run: pip install -r requirements.txt
-import importlib
 # Imports
 import os
+import shutil
 import sys
 import subprocess
+import importlib
 import numpy as np
 import librosa as lb
-import torch
 from huggingface_hub import hf_hub_download
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QMessageBox
-
 import torch
 import torch.nn as nn
+
 
 
 class getModelVoice(nn.Module):
@@ -39,40 +38,76 @@ def get_spectrogram(wav_file, sample_rate):
 class AudioClassifierApp(QWidget):
     def __init__(self):
         super().__init__()
+        self.models_initialized = False
         self.init_ui()
 
     def init_ui(self):
         self.setWindowTitle('Audio Classifier')
         layout = QVBoxLayout()
 
-        open_button = QPushButton('Open Audio File', self)
+        open_button = QPushButton('Upload Audio File', self)
         open_button.clicked.connect(self.show_dialog)
         layout.addWidget(open_button)
+
+        close_button = QPushButton('Close', self)
+        close_button.clicked.connect(self.close_app)
+        layout.addWidget(close_button)
 
         self.setLayout(layout)
         self.show()
 
     def show_dialog(self):
+        if not self.models_initialized:
+            self.initialize_models()
+
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getOpenFileName(
             self,
-            "Open Audio File",
+            "Please select the audio file you want to recognize",
             "",
             "Audio Files (*.mp3 *.wav)",
             options=options
         )
         if file_path:
-            print(f"Selected file: {file_path}")  # Debug line
-            try:
-                result = query_function(file_path)
-                QMessageBox.information(self, "Result", result)
-                print("Classification result:", result)
-            except Exception as e:
-                QMessageBox.critical(self, "Error", f"An error occurred: {e}")
-                print(f"Error during classification: {e}")
+            self.process_file(file_path)
 
+    def process_file(self, file_path):
+        processing_dialog = QMessageBox(self)
+        processing_dialog.setWindowTitle("Processing")
+        processing_dialog.setText("AI is recognizing the audio now....")
+        processing_dialog.setStandardButtons(QMessageBox.NoButton)
+        processing_dialog.show()
 
+        try:
+            result = query_function(file_path)
+            processing_dialog.accept()
+            self.show_result(result)
+        except Exception as e:
+            processing_dialog.accept()
+            self.show_error(str(e))
 
+    def show_result(self, result):
+        QMessageBox.information(self, "Result", result)
+        print("Classification result:", result)
+
+    def show_error(self, error_message):
+        QMessageBox.critical(self, "Error", f"An error occurred: {error_message}")
+        print(f"Error during classification: {error_message}")
+
+    def close_app(self):
+        clean()
+        QApplication.instance().quit()
+
+    def initialize_models(self):
+        init_dialog = QMessageBox(self)
+        init_dialog.setWindowTitle("Initializing")
+        init_dialog.setText("Initializing AI models...")
+        init_dialog.setStandardButtons(QMessageBox.NoButton)
+        init_dialog.show()
+
+        initialize_models()
+        self.models_initialized = True
+        init_dialog.accept()
 
 def initialize_models():
 
@@ -86,20 +121,25 @@ def initialize_models():
     specto_model_filename = 'spectoModel.pth'
     ensemble_model_filename = 'ensembleModel.pth'
     custom_models_filename = 'Voice_model_loader.py'
-
-    # Install dependencies
-    custom_models_path = download_model(voice_model_repo, custom_models_filename, hf_models_token)
-
-    # Import custom_models dynamically
-    spec = importlib.util.spec_from_file_location("Voice_model_loader", custom_models_path)
-    custom_models = importlib.util.module_from_spec(spec)
-    sys.modules["Voice_model_loader"] = custom_models
-    spec.loader.exec_module(custom_models)
+    # Define the path to the folder
+    folder_path = 'Models'
 
     # Download the models
     voice_model_path = download_model(voice_model_repo, voice_model_filename, hf_models_token)
     specto_model_path = download_model(specto_model_repo, specto_model_filename, hf_models_token)
     ensemble_model_path = download_model(ensemble_model_repo, ensemble_model_filename, hf_models_token)
+
+    # # Download the Python file
+    # voice_class_path = hf_hub_download(repo_id=voice_model_repo, filename=custom_models_filename,
+    #                                    use_auth_token=hf_models_token)
+    # # Move the Python file to the Models folder
+    # shutil.copy(voice_class_path, os.path.join(folder_path, custom_models_filename))
+    #
+    # custom_model_save_path = os.path.join('Models', custom_models_filename)
+    # os.rename(voice_class_path, custom_model_save_path)
+    #
+    # # Print to verify the path
+    # print(f"Voice model class path: {custom_model_save_path}")
 
     # Load the models and map to CPU
     voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'))
@@ -110,9 +150,6 @@ def initialize_models():
     voice_model.eval()
     specto_model.eval()
     ensemble_model.eval()
-
-    # Define the path to the folder
-    folder_path = 'Models'
 
     # Check if the folder exists
     if not os.path.exists(folder_path):
@@ -128,15 +165,16 @@ def initialize_models():
 
 
 def main():
-    initialize_models()
-    test_file = "C:\\Users\\guybe\\OneDrive\\שולחן העבודה\\אפקה\\פרויקט גמר\\website\\11-real.wav"  # Replace with a valid file path
-    result = query_function(test_file)
-    print("test_file result:", result)
+    install_dependencies()
+    getModelVoice = import_voice_model()  # Import the getModelVoice class
 
+    if getModelVoice is None:
+        print("Failed to import the getModelVoice class. Exiting.")
+    else:
+        print("getModelVoice class imported successfully.")
     app = QApplication(sys.argv)
     ex = AudioClassifierApp()
     sys.exit(app.exec_())
-
 
 def query_function(file_path):
     """
@@ -202,12 +240,6 @@ def query_function(file_path):
     spoof_probability = ensemble_probs_list[0]
     result = "The audio file is spoof." if spoof_probability > 50 else "The audio file is bona-fide."
 
-
-    # Clean up models
-    #os.remove("Models/specto_model.pth")
-    #os.remove("Models/voice_model.pth")
-    #os.remove("Models/ensemble_model.pth")
-
     # return result #to change
     return result
 
@@ -264,6 +296,33 @@ def huggingface_login(token):
     except subprocess.CalledProcessError as e:
         print("An error occurred while executing the process.")
         print(e)
+
+def clean():
+    folder_path = 'Models'
+    files_to_remove = ["specto_model.pth", "voice_model.pth", "ensemble_model.pth", "Voice_model_loader.py"]
+
+    for file_name in files_to_remove:
+        file_path = os.path.join(folder_path, file_name)
+        if os.path.exists(file_path):
+            try:
+                os.remove(file_path)
+                print(f"Removed {file_path}")
+            except OSError as e:
+                print(f"Error removing {file_path}: {e}")
+
+def import_voice_model():
+    # Add Models directory to sys.path
+    sys.path.append(os.path.abspath('Models'))
+
+    # Import the getModelVoice class from the downloaded file
+    try:
+        voice_model_loader = importlib.import_module('Voice_model_loader')
+        getModelVoice = getattr(voice_model_loader, 'getModelVoice')
+        print("Model imported successfully.")
+        return getModelVoice
+    except ModuleNotFoundError as e:
+        print(f"Error importing model: {e}")
+        return None
 
 
 if __name__ == '__main__':
