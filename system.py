@@ -4,14 +4,21 @@ import torch
 import subprocess
 import sys
 import importlib
-from models import getModelVoice
-#import shutil
+from voiceModel import getModelVoice
+import dill
 
+#global variables
+paths_array = []
+dummy_contents = ''
 
 def initialize_models():
 
     hf_login_token = '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'
     hf_models_token = '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'
+
+    print("get to initialize_models")
+
+    huggingface_login(hf_login_token)
 
     voice_model_repo = 'gbenari2/voice'
     specto_model_repo = 'gbenari2/specto'
@@ -23,31 +30,23 @@ def initialize_models():
     # Define the path to the folder
     folder_path = 'Models'
 
+    print("start download models")
+
     # Download the models
     voice_model_path = download_model(voice_model_repo, voice_model_filename, hf_models_token)
     specto_model_path = download_model(specto_model_repo, specto_model_filename, hf_models_token)
     ensemble_model_path = download_model(ensemble_model_repo, ensemble_model_filename, hf_models_token)
 
-    # # Download the Python file
-    # voice_class_path = hf_hub_download(repo_id=voice_model_repo, filename=custom_models_filename,
-    #                                    use_auth_token=hf_models_token)
-    # # Move the Python file to the Models folder
-    # shutil.copy(voice_class_path, os.path.join(folder_path, custom_models_filename))
-    #
-    # custom_model_save_path = os.path.join('Models', custom_models_filename)
-    # os.rename(voice_class_path, custom_model_save_path)
-    #
-    # # Print to verify the path
-    # print(f"Voice model class path: {custom_model_save_path}")
 
-    # Load the models and map to CPU
 
-    getModelVoiceClass = import_voice_model()  # Import the getModelVoice class
+    # Append the paths to the array
+    paths_array.append(voice_model_path)
+    paths_array.append(specto_model_path)
+    paths_array.append(ensemble_model_path)
 
-    if getModelVoiceClass is None:
-        print("Failed to import getModelVoice class.")
-    else:
-        print("getModelVoice class imported successfully.")
+    # Import the getModelVoice class
+    import_voice_model(voice_model_repo, custom_models_filename, hf_models_token)
+
 
     try:
         voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'))
@@ -56,10 +55,7 @@ def initialize_models():
     except Exception as e:
         print(f"Failed to load the models. Error: {e}")
 
-    # Set models to evaluation mode
-    voice_model.eval()
-    specto_model.eval()
-    ensemble_model.eval()
+
 
     # Check if the folder exists
     if not os.path.exists(folder_path):
@@ -67,9 +63,15 @@ def initialize_models():
         os.makedirs(folder_path)
 
     # Save models to Models folder
-    torch.save(voice_model, 'Models/voice_model.pth')
+    torch.save(voice_model, 'Models/voice_model.pth', pickle_module=dill)
     torch.save(specto_model, 'Models/specto_model.pth')
     torch.save(ensemble_model, 'Models/ensemble_model.pth')
+
+    # Append the paths to the array to delete at shutdown
+    paths_array.append('Models/voice_model.pth')
+    paths_array.append('Models/specto_model.pth')
+    paths_array.append('Models/ensemble_model.pth')
+
 
     print("Initialization complete")
 
@@ -104,58 +106,88 @@ def install_dependencies():
 
 def huggingface_login(token):
     """
-    Login to Hugging Face using the provided token.
+    Log in to Hugging Face using the provided token.
 
     Args:
         token (str): Hugging Face token.
     """
     try:
+        # Define the command with the --token option
+        command = ['huggingface-cli', 'login', '--token', token]
+
+        # Execute the command
         process = subprocess.Popen(
-            ['huggingface-cli', 'login'],
-            stdin=subprocess.PIPE,
+            command,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             text=True
         )
-        stdout, stderr = process.communicate(input=token + '\n')
+
+        # Capture the output and errors
+        stdout, stderr = process.communicate()
 
         if process.returncode == 0:
             print("Hugging Face login completed successfully.")
+            print(stdout)  # Optional: print the stdout to see the response
         else:
             print("An error occurred while logging into Hugging Face.")
-            print(stderr)
-    except subprocess.CalledProcessError as e:
-        print("An error occurred while executing the process.")
+            print(stderr)  # Print stderr to see any error messages
+
+    except Exception as e:
+        print("An unexpected error occurred while executing the process.")
         print(e)
 
 
+def logout_huggingface():
+    subprocess.run(['huggingface-cli', 'logout'])
+
+
 def clean():
-    folder_path = 'Models'
-    files_to_remove = ["specto_model.pth", "voice_model.pth", "ensemble_model.pth", "Voice_model_loader.py"]
+    global paths_array
+    #reset dummy file
+    with open('voiceModel.py', 'w') as f:
+        f.write(dummy_contents)
 
-    for file_name in files_to_remove:
-        file_path = os.path.join(folder_path, file_name)
-        if os.path.exists(file_path):
+    # Remove the downloaded files
+    for path in paths_array:
+        if os.path.exists(path):
             try:
-                os.remove(file_path)
-                print(f"Removed {file_path}")
+                os.remove(path)
+                print(f"Removed {os.path.basename(path)}")
             except OSError as e:
-                print(f"Error removing {file_path}: {e}")
+                print(f"Error removing {os.path.basename(path)}: {e}")
+
+    # logout from huggingface
+    logout_huggingface()
 
 
-def import_voice_model():
-    # Add Models directory to sys.path
-    sys.path.append(os.path.abspath('Models'))
+def import_voice_model(repo, filename, token):
+    global dummy_contents
+    path_to_py = download_model(repo, filename, token)
+    dummy_file_path = 'voiceModel.py'
+    module_name = 'voiceModel'
 
-
+    paths_array.append(path_to_py)  # Append the path to the array to delete at shutdown
 
     # Import the getModelVoice class from the downloaded file
     try:
-        voice_model_loader = importlib.import_module('Voice_model_loader')
-        getModelVoiceClass = getattr(voice_model_loader, 'getModelVoice')
+        # Read the content of the downloaded file
+        with open(path_to_py, 'r') as downloaded_file:
+            downloaded_content = downloaded_file.read()
+
+        with open(dummy_file_path, 'r') as dummy_read_file:
+            dummy_contents = dummy_read_file.read()
+
+        # Replace the content of the dummy file with the downloaded content
+        with open(dummy_file_path, 'w') as dummy_file:
+            dummy_file.write(downloaded_content)
+
+        # Reload the module
+        if module_name in sys.modules:
+            importlib.reload(sys.modules[module_name])
+        else:
+            importlib.import_module(module_name)
+
         print("Model imported successfully.")
-        return getModelVoiceClass
     except ModuleNotFoundError as e:
         print(f"Error importing model: {e}\nInstead, loading hardcoded archtiecture.")
-
-        return None

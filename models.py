@@ -1,23 +1,7 @@
 import torch
-import torch.nn as nn
 import librosa as lb
 import numpy as np
 
-
-class getModelVoice(nn.Module):
-    def __init__(self, input_size=551053, hidden_size=128, num_layers=2, num_classes=2):
-        super(getModelVoice, self).__init__()
-        self.lstm1 = nn.LSTM(input_size=input_size, hidden_size=hidden_size, num_layers=num_layers, batch_first=True,
-                             dropout=0.5)
-        self.fc = nn.Linear(in_features=hidden_size, out_features=num_classes)
-        self.logsoftmax = nn.LogSoftmax(dim=1)
-
-    def forward(self, x):
-        x = x.unsqueeze(1)  # Add sequence length dimension: (batch_size, 1, input_size)
-        out, _ = self.lstm1(x)
-        out = out[:, -1, :]
-        out = self.fc(out)
-        return out
 
 # Utility function to compute mel spectrogram
 def get_spectrogram(wav_file, sample_rate):
@@ -59,6 +43,12 @@ def query_function(file_path):
     voice_model = torch.load("Models/voice_model.pth", map_location=torch.device('cpu'))
     specto_model = torch.load("Models/specto_model.pth", map_location=torch.device('cpu'))
     ensemble_model = torch.load("Models/ensemble_model.pth", map_location=torch.device('cpu'))
+
+    # Set models to evaluation mode
+    voice_model.eval()
+    specto_model.eval()
+    ensemble_model.eval()
+
 
     # Run into specto model
     specto_input = mel_t.unsqueeze(0)  # Add batch dimension

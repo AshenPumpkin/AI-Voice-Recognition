@@ -13,3 +13,4 @@ IPython
 transformers
 huggingface_hub
 PyQt5
+dill
