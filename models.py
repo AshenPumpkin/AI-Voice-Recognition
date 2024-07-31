@@ -80,7 +80,7 @@ def query_function(file_path):
 
 
     # Run into ensemble model
-    ensemble_input = torch.tensor(ensemble_inputs, dtype=torch.float32).unsqueeze(0)  # Add batch dimension
+    ensemble_input = ensemble_inputs.clone().detach().unsqueeze(0).float()   # Add batch dimension
     with torch.no_grad():
         ensemble_output = ensemble_model(ensemble_input)
 

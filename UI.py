@@ -6,13 +6,13 @@ from system import clean, initialize_models, install_dependencies
 
 
 class AudioClassifierApp(QWidget):
-    def _init_(self):
-        super()._init_()
+    def __init__(self):
+        super().__init__()
         self.models_initialized = False
         self.init_ui()
 
     def init_ui(self):
-        print("test")
+
         # if not self.models_initialized:
         #    self.initialize_models()
 

@@ -12,6 +12,7 @@ paths_array = []
 dummy_contents = ''
 
 def initialize_models():
+    global paths_array
 
     hf_login_token = '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'
     hf_models_token = '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'
@@ -36,8 +37,6 @@ def initialize_models():
     voice_model_path = download_model(voice_model_repo, voice_model_filename, hf_models_token)
     specto_model_path = download_model(specto_model_repo, specto_model_filename, hf_models_token)
     ensemble_model_path = download_model(ensemble_model_repo, ensemble_model_filename, hf_models_token)
-
-
 
     # Append the paths to the array
     paths_array.append(voice_model_path)
@@ -143,7 +142,9 @@ def logout_huggingface():
 
 
 def clean():
+    global dummy_contents
     global paths_array
+
     #reset dummy file
     with open('voiceModel.py', 'w') as f:
         f.write(dummy_contents)
@@ -163,6 +164,8 @@ def clean():
 
 def import_voice_model(repo, filename, token):
     global dummy_contents
+    global paths_array
+
     path_to_py = download_model(repo, filename, token)
     dummy_file_path = 'voiceModel.py'
     module_name = 'voiceModel'
