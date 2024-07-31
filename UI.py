@@ -73,7 +73,7 @@ class AudioClassifierApp(QWidget):
         print(f"Error during classification: {error_message}")
 
     def close_app(self):
-        #clean()
+        clean()
         QApplication.instance().quit()
 
     def initialize_models(self):

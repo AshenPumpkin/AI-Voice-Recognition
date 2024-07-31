@@ -14,6 +14,7 @@ dummy_contents = ''
 def initialize_models():
     global paths_array
 
+
     hf_login_token = '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'
     hf_models_token = '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'
 
@@ -29,6 +30,9 @@ def initialize_models():
     # Define the path to the folder
     folder_path = 'Models'
 
+    # Import the getModelVoice class
+    import_voice_model(voice_model_repo, custom_models_filename, hf_models_token)
+
     # Download the models
     voice_model_path = download_model(voice_model_repo, voice_model_filename, hf_models_token)
     specto_model_path = download_model(specto_model_repo, specto_model_filename, hf_models_token)
@@ -38,9 +42,6 @@ def initialize_models():
     paths_array.append(voice_model_path)
     paths_array.append(specto_model_path)
     paths_array.append(ensemble_model_path)
-
-    # Import the getModelVoice class
-    import_voice_model(voice_model_repo, custom_models_filename, hf_models_token)
 
 
     try:
@@ -160,7 +161,7 @@ def import_voice_model(repo, filename, token):
         with open(dummy_file_path, 'w') as dummy_file:
             dummy_file.write(downloaded_content)
 
-        # Reload the module
+        # Import the module or reload if already imported
         if module_name in sys.modules:
             importlib.reload(sys.modules[module_name])
         else:
