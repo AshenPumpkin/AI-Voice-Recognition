@@ -1,5 +1,5 @@
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QMessageBox
-from PyQt5.QtGui import QDesktopServices
+from PyQt5.QtGui import QDesktopServices, QCloseEvent
 from PyQt5.QtCore import QUrl
 from models import query_function
 from system import clean, initialize_models, install_dependencies
@@ -74,7 +74,7 @@ class AudioClassifierApp(QWidget):
         print(f"Error during classification: {error_message}")
 
     def close_app(self):
-        clean()
+        #clean()
         QApplication.instance().quit()
 
     def initialize_models(self):
@@ -90,3 +90,7 @@ class AudioClassifierApp(QWidget):
     def open_website(self):
         url = "https://ashenpumpkin.github.io/AI-Voice-Recognition/"
         QDesktopServices.openUrl(QUrl(url))
+
+    def closeEvent(self, event: QCloseEvent):
+        self.close_app()
+        event.accept()
