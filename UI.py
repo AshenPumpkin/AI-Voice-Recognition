@@ -2,7 +2,7 @@ from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFi
 from PyQt5.QtGui import QDesktopServices, QCloseEvent
 from PyQt5.QtCore import QUrl
 from models import query_function
-from system import clean, initialize_models, install_dependencies
+from system import clean, initialize_models
 
 
 class AudioClassifierApp(QWidget):
@@ -12,9 +12,8 @@ class AudioClassifierApp(QWidget):
         self.init_ui()
 
     def init_ui(self):
-
-        # if not self.models_initialized:
-        #    self.initialize_models()
+        if not self.models_initialized:
+            self.initialize_models()
 
         self.setWindowTitle('AI Voice Recognize')
         self.setFixedSize(500, 400)
@@ -79,7 +78,7 @@ class AudioClassifierApp(QWidget):
 
     def initialize_models(self):
         init_dialog = QMessageBox(self)
-        init_dialog.setWindowTitle("Initializing models")
+        init_dialog.setWindowTitle("Initializing system")
         init_dialog.setText("Please wait while the AI models are initialized...")
         init_dialog.setStandardButtons(QMessageBox.NoButton)
         init_dialog.show()

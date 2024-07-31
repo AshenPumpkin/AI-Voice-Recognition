@@ -23,13 +23,20 @@ def query_function(file_path):
 
     wav_file, sample_rate = lb.load(file_path)
 
-    max_length = 551052  # longest datapoint, 24 seconds
+    length2 = 551052
 
-    # Pad or truncate the audio file to ensure consistent length
-    if (wav_length := len(wav_file)) < max_length:
-        wav_file = np.pad(wav_file, (0, max_length - wav_length), 'constant')
-    elif wav_length > max_length:
-        wav_file = wav_file[:max_length]
+    if len(wav_file) < length2:
+        # Pad with zeros if the length is less than the maximum length
+        wav_file = np.pad(wav_file, (0, length2 - len(wav_file)), 'constant')
+    elif len(wav_file) > length2:
+        # Truncate the audio file if the length is greater than the maximum length
+        wav_file = wav_file[:length2]
+
+
+    #length = 96333  # average length
+
+    #wav_file = adjust_length(wav_file, length)
+
 
     # Compute mel spectrogram
     mel = get_spectrogram(wav_file, sample_rate)
@@ -84,17 +91,22 @@ def query_function(file_path):
     with torch.no_grad():
         ensemble_output = ensemble_model(ensemble_input)
 
-    print(f"Ensemble output: {ensemble_output}")
+    if ensemble_output <= 0.5:
+        ensemble_pred = 0
+    else:
+        ensemble_pred = 1
 
-    ensemble_probs = torch.exp(ensemble_output)
-    ensemble_probs = ensemble_probs / torch.sum(ensemble_probs) * 100
-    ensemble_probs_list = ensemble_probs.cpu().numpy().flatten().tolist()
-
-    spoof_probability = ensemble_probs_list[0]
-    result = "The audio file is spoof." if spoof_probability > 50 else "The audio file is bona-fide."
+    result = "The audio file is spoof." if ensemble_pred==0 else "The audio file is bona-fide."
 
     # return result #to change
     return result
 
-
+def adjust_length(wavFile, length):
+    if len(wavFile) < length:
+        # Pad with zeros if the length is less than the maximum length
+        wavFile = np.pad(wavFile, (0, length - len(wavFile)), 'constant')
+    elif len(wavFile) > length:
+        # Truncate the audio file if the length is greater than the maximum length
+        wavFile = wavFile[:length]
+    return wavFile
 

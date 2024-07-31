@@ -1,4 +1,4 @@
-from huggingface_hub import hf_hub_download
+from huggingface_hub import hf_hub_download, login
 import os
 import torch
 import subprocess
@@ -17,8 +17,6 @@ def initialize_models():
     hf_login_token = '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'
     hf_models_token = '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'
 
-    print("get to initialize_models")
-
     huggingface_login(hf_login_token)
 
     voice_model_repo = 'gbenari2/voice'
@@ -30,8 +28,6 @@ def initialize_models():
     custom_models_filename = 'Voice_model_loader.py'
     # Define the path to the folder
     folder_path = 'Models'
-
-    print("start download models")
 
     # Download the models
     voice_model_path = download_model(voice_model_repo, voice_model_filename, hf_models_token)
@@ -70,7 +66,6 @@ def initialize_models():
     paths_array.append('Models/voice_model.pth')
     paths_array.append('Models/specto_model.pth')
     paths_array.append('Models/ensemble_model.pth')
-
 
     print("Initialization complete")
 
@@ -111,27 +106,7 @@ def huggingface_login(token):
         token (str): Hugging Face token.
     """
     try:
-        # Define the command with the --token option
-        command = ['huggingface-cli', 'login', '--token', token]
-
-        # Execute the command
-        process = subprocess.Popen(
-            command,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            text=True
-        )
-
-        # Capture the output and errors
-        stdout, stderr = process.communicate()
-
-        if process.returncode == 0:
-            print("Hugging Face login completed successfully.")
-            print(stdout)  # Optional: print the stdout to see the response
-        else:
-            print("An error occurred while logging into Hugging Face.")
-            print(stderr)  # Print stderr to see any error messages
-
+        login(token)
     except Exception as e:
         print("An unexpected error occurred while executing the process.")
         print(e)

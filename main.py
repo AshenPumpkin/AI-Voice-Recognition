@@ -10,7 +10,6 @@ def main():
     # Initialization
     install_dependencies()
     warnings.filterwarnings("ignore", category=FutureWarning)
-    initialize_models()
 
 
     # Create the application
