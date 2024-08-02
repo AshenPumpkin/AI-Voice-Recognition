@@ -37,7 +37,6 @@ def query_function(file_path):
 
     #wav_file = adjust_length(wav_file, length)
 
-
     # Compute mel spectrogram
     mel = get_spectrogram(wav_file, sample_rate)
 
@@ -56,16 +55,15 @@ def query_function(file_path):
     specto_model.eval()
     ensemble_model.eval()
 
-
     # Run into specto model
     specto_input = mel_t.unsqueeze(0)  # Add batch dimension
     with torch.no_grad():
         specto_output = specto_model(specto_input)
     specto_probs = torch.exp(specto_output)
 
-    #specto precentage calculation
-    specto_precentage = specto_probs / torch.sum(specto_probs) * 100
-    specto_precentage_list = specto_precentage.cpu().numpy().flatten().tolist()
+    # Specto percentage calculation
+    specto_percentage = specto_probs / torch.sum(specto_probs) * 100
+    specto_percentage_list = specto_percentage.cpu().numpy().flatten().tolist()
 
     # Run into voice model
     voice_input = wav_and_samp_t.unsqueeze(0)  # Add batch dimension
@@ -73,9 +71,9 @@ def query_function(file_path):
         voice_output = voice_model(voice_input)
     voice_probs = torch.exp(voice_output)
 
-    #voice precentage calculation
-    voice_precentage = voice_probs / torch.sum(voice_probs) * 100
-    voice_precentage_list = voice_precentage.cpu().numpy().flatten().tolist()
+    # Voice percentage calculation
+    voice_percentage = voice_probs / torch.sum(voice_probs) * 100
+    voice_percentage_list = voice_percentage.cpu().numpy().flatten().tolist()
 
     specto_probs_spoof = specto_probs[0,1]
     Spectro_Prob_Not_Spoof = specto_probs[0,0]
@@ -85,21 +83,21 @@ def query_function(file_path):
     # Combine the probabilities for ensemble model
     ensemble_inputs = torch.tensor([specto_probs_spoof, Spectro_Prob_Not_Spoof, Voice_Prob_Spoof, Voice_Prob_Not_Spoof], dtype=torch.float32)
 
-
     # Run into ensemble model
     ensemble_input = ensemble_inputs.clone().detach().unsqueeze(0).float()   # Add batch dimension
     with torch.no_grad():
         ensemble_output = ensemble_model(ensemble_input)
 
     if ensemble_output <= 0.5:
-        ensemble_pred = 0
+        ensemble_prediction = 0
     else:
-        ensemble_pred = 1
+        ensemble_prediction = 1
 
-    result = "The audio file is spoof." if ensemble_pred==0 else "The audio file is bona-fide."
+    result = "The audio file is spoof." if ensemble_prediction == 0 else "The audio file is bona-fide."
 
-    # return result #to change
+    # Prepare voice_percentage_list and specto_percentage_list for the result, maybe show them in the UI? probabilities
     return result
+
 
 def adjust_length(wavFile, length):
     if len(wavFile) < length:

@@ -3,35 +3,38 @@ import os
 import torch
 import subprocess
 import sys
-import importlib
-from voiceModel import getModelVoice
 import dill
 
-#global variables
+# Global variables
 paths_array = []
 dummy_contents = ''
+hf_login_token = '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'
+hf_models_token = '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'
+voice_model_repo = 'gbenari2/voice'
+specto_model_repo = 'gbenari2/specto'
+ensemble_model_repo = 'gbenari2/ensemble'
+voice_model_filename = 'voiceModel.pth'
+specto_model_filename = 'spectoModel.pth'
+ensemble_model_filename = 'ensembleModel.pth'
+custom_models_filename = 'Voice_model_loader.py'
+
 
 def initialize_models():
     global paths_array
-
-
-    hf_login_token = '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'
-    hf_models_token = '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'
+    global hf_login_token
+    global  hf_models_token
+    global voice_model_repo
+    global specto_model_repo
+    global ensemble_model_repo
+    global voice_model_filename
+    global specto_model_filename
+    global ensemble_model_filename
+    global custom_models_filename
 
     huggingface_login(hf_login_token)
 
-    voice_model_repo = 'gbenari2/voice'
-    specto_model_repo = 'gbenari2/specto'
-    ensemble_model_repo = 'gbenari2/ensemble'
-    voice_model_filename = 'voiceModel.pth'
-    specto_model_filename = 'spectoModel.pth'
-    ensemble_model_filename = 'ensembleModel.pth'
-    custom_models_filename = 'Voice_model_loader.py'
     # Define the path to the folder
     folder_path = 'Models'
-
-    # Import the getModelVoice class
-    import_voice_model(voice_model_repo, custom_models_filename, hf_models_token)
 
     # Download the models
     voice_model_path = download_model(voice_model_repo, voice_model_filename, hf_models_token)
@@ -43,15 +46,12 @@ def initialize_models():
     paths_array.append(specto_model_path)
     paths_array.append(ensemble_model_path)
 
-
     try:
         voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'))
         specto_model = torch.load(specto_model_path, map_location=torch.device('cpu'))
         ensemble_model = torch.load(ensemble_model_path, map_location=torch.device('cpu'))
     except Exception as e:
         print(f"Failed to load the models. Error: {e}")
-
-
 
     # Check if the folder exists
     if not os.path.exists(folder_path):
@@ -70,6 +70,7 @@ def initialize_models():
 
     print("Initialization complete")
 
+
 def download_model(repo_id, filename, token):
     """
     Download a model from Hugging Face Hub.
@@ -83,8 +84,6 @@ def download_model(repo_id, filename, token):
         str: File path of the downloaded model.
     """
     return hf_hub_download(repo_id=repo_id, filename=filename, use_auth_token=token)
-
-
 
 
 def install_dependencies():
@@ -121,7 +120,7 @@ def clean():
     global dummy_contents
     global paths_array
 
-    #reset dummy file
+    # Reset the dummy file
     with open('voiceModel.py', 'w') as f:
         f.write(dummy_contents)
 
@@ -134,17 +133,21 @@ def clean():
             except OSError as e:
                 print(f"Error removing {os.path.basename(path)}: {e}")
 
-    # logout from huggingface
+    # Logout from huggingface
     logout_huggingface()
 
 
-def import_voice_model(repo, filename, token):
+def initialize_system():
     global dummy_contents
     global paths_array
+    global voice_model_repo
+    global custom_models_filename
+    global hf_models_token
 
-    path_to_py = download_model(repo, filename, token)
+    install_dependencies()
+
+    path_to_py = download_model(voice_model_repo, custom_models_filename, hf_models_token)
     dummy_file_path = 'voiceModel.py'
-    module_name = 'voiceModel'
 
     paths_array.append(path_to_py)  # Append the path to the array to delete at shutdown
 
@@ -161,12 +164,6 @@ def import_voice_model(repo, filename, token):
         with open(dummy_file_path, 'w') as dummy_file:
             dummy_file.write(downloaded_content)
 
-        # Import the module or reload if already imported
-        if module_name in sys.modules:
-            importlib.reload(sys.modules[module_name])
-        else:
-            importlib.import_module(module_name)
-
-        print("Model imported successfully.")
+        print("Module imported successfully.")
     except ModuleNotFoundError as e:
         print(f"Error importing model: {e}\nInstead, loading hardcoded archtiecture.")

@@ -8,13 +8,9 @@ from system import clean, initialize_models
 class AudioClassifierApp(QWidget):
     def __init__(self):
         super().__init__()
-        self.models_initialized = False
         self.init_ui()
 
     def init_ui(self):
-        if not self.models_initialized:
-            self.initialize_models()
-
         self.setWindowTitle('AI Voice Recognize')
         self.setFixedSize(500, 400)
         layout = QVBoxLayout()

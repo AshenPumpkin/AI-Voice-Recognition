@@ -1,16 +1,20 @@
 # Imports
-from system import install_dependencies, initialize_models
+from system import initialize_models, initialize_system
 from UI import AudioClassifierApp
 import sys
 from PyQt5.QtWidgets import QApplication
 import warnings
+import importlib
+initialize_system()
+module = importlib.import_module("voiceModel")
+importlib.reload(module)
 from voiceModel import getModelVoice
 
+
 def main():
-    # Initialization
-    install_dependencies()
     warnings.filterwarnings("ignore", category=FutureWarning)
 
+    initialize_models()
 
     # Create the application
     app = QApplication(sys.argv)
