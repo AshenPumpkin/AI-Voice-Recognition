@@ -1,22 +1,50 @@
-# AI Voice Recognize 🎙️
+# AI Voice Recognize (AVR) 🎙️
+Usage Instructions
 
-Overview:
-The AI Voice Recognize project is a collaborative effort by Guy Ben Ari and Ynon Friedman, fourth-year students at Afeka College of Engineering. The project focuses on developing a sophisticated system for detecting spoofed audio files, distinguishing them from genuine human voices. By employing cutting-edge techniques in machine learning and signal processing, our goal is to provide a robust solution for automatic speaker verification systems.
+    Download and Install:
+        Obtain the latest executable (.exe) file.
+        Simply run the .exe file to launch the application.
 
-Dataset:
-The project utilizes datasets such as ASVspoof2019, a benchmark dataset widely used in the field of audio spoofing detection. This dataset offers a diverse range of real human voice recordings and spoofed audio files, enabling comprehensive training and evaluation of our model.
+    Using the Application:
+        Open the executable file.
+        Use the graphical interface to upload audio files.
+        The system will process the audio and display whether it is genuine or spoofed.
 
-Approach:
-We employ a neural network architecture combining LSTM (Long Short-Term Memory) networks for sequential audio data processing and Conv2D layers for feature extraction from Mel-Frequency Cepstral Coefficients (MFCC) images. By concatenating these features and employing fully connected layers for classification, our model aims to accurately distinguish between real and spoofed audio files.
+Overview
 
-Development Environment:
-The project is developed using JupyterLab Notebook for model prototyping and training. We leverage Git for version control, enabling seamless collaboration and tracking of project changes.
+The AI Voice Recognize (AVR) project, developed by Guy Ben Ari and Ynon Friedman from Afeka College of Engineering, focuses on detecting spoofed audio files and distinguishing them from genuine human voices using advanced machine learning techniques.
+Dataset
 
-Integration into Product:
-The trained model is integrated into a product developed in PyCharm, providing real-time or batch inference capabilities on audio files. Extensive testing ensures the reliability and performance of the product in real-world scenarios.
+ASVspoof2019 dataset is used, featuring a diverse range of real and spoofed audio files for model training and evaluation.
+Approach
 
-Contact:
-For inquiries or collaboration opportunities, please contact:
+    Architecture: Utilizes LSTM networks for sequential audio data and Conv2D layers for feature extraction from MFCC images.
+    Model: Features are concatenated and classified using fully connected layers.
 
-    Guy Ben Ari: guy.ben.ari@s.afeka.ac.il
-    Ynon Friedman: ynon.friedman@s.afeka.ac.il
+Development Environment
+
+    Prototyping and Training: Conducted using JupyterLab Notebook.
+    Version Control: Managed with Git.
+
+Integration
+
+The system is packaged as an executable file for ease of use, providing both real-time and batch processing capabilities.
+Testing Breakdown
+
+    Tests Conducted: Includes UI functionality, audio processing accuracy, and model integration.
+    Results: Includes test scripts, issues identified, and corrective actions taken.
+
+Limitations and Solutions
+
+    Data Inconsistency: Resolved through normalization techniques.
+    Integration Issues: Fixed by integrating with HuggingFace.
+    Resource Constraints: Addressed by upgrading VRAM.
+    Performance: Enhanced with CUDA.
+    UI and Security: Improved based on feedback and added encryption.
+
+Contact
+
+For inquiries or collaboration:
+
+    Guy Ben Ari: gbenari2@gmail.com
+    Ynon Friedman: ynonfridman@gmai.com
