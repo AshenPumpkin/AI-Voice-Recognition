@@ -1,3 +1,4 @@
+# Import necessary libraries
 from PyQt5.QtWidgets import QApplication, QWidget, QVBoxLayout, QPushButton, QFileDialog, QMessageBox
 from PyQt5.QtGui import QDesktopServices, QCloseEvent
 from PyQt5.QtCore import QUrl
@@ -5,6 +6,7 @@ from models import query_function
 from system import clean, initialize_models
 
 
+# Create the main application window
 class AudioClassifierApp(QWidget):
     def __init__(self):
         super().__init__()

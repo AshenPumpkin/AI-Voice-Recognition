@@ -1,3 +1,4 @@
+# Import necessary libraries
 from huggingface_hub import hf_hub_download, login
 import os
 import torch
@@ -19,6 +20,7 @@ ensemble_model_filename = 'ensembleModel.pth'
 custom_models_filename = 'Voice_model_loader.py'
 
 
+# Initialize the models
 def initialize_models():
     global paths_array
     global hf_login_token
@@ -71,25 +73,13 @@ def initialize_models():
     print("Initialization complete")
 
 
+# Download a model from Hugging Face Hub
 def download_model(repo_id, filename, token):
-    """
-    Download a model from Hugging Face Hub.
-
-    Args:
-        repo_id (str): Repository ID.
-        filename (str): Filename to download.
-        token (str): Hugging Face token.
-
-    Returns:
-        str: File path of the downloaded model.
-    """
     return hf_hub_download(repo_id=repo_id, filename=filename, use_auth_token=token)
 
 
+# Install dependencies
 def install_dependencies():
-    """
-    Install required dependencies from requirements.txt.
-    """
     try:
         subprocess.run([sys.executable, '-m', 'pip', 'install', '-r', 'requirements.txt'], check=True)
         print("Dependencies installed successfully.")
@@ -98,13 +88,8 @@ def install_dependencies():
         print(e)
 
 
+# Log in to Hugging Face
 def huggingface_login(token):
-    """
-    Log in to Hugging Face using the provided token.
-
-    Args:
-        token (str): Hugging Face token.
-    """
     try:
         login(token)
     except Exception as e:
@@ -112,10 +97,12 @@ def huggingface_login(token):
         print(e)
 
 
+# Logout from Hugging Face
 def logout_huggingface():
     subprocess.run(['huggingface-cli', 'logout'])
 
 
+# Clean up the system
 def clean():
     global dummy_contents
     global paths_array
@@ -137,6 +124,7 @@ def clean():
     logout_huggingface()
 
 
+# Initialize the system
 def initialize_system():
     global dummy_contents
     global paths_array
