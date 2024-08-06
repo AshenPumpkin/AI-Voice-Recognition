@@ -33,8 +33,6 @@ def initialize_models():
     global ensemble_model_filename
     global custom_models_filename
 
-    huggingface_login(hf_login_token)
-
     # Define the path to the folder
     folder_path = 'Models'
 
@@ -131,6 +129,9 @@ def initialize_system():
     global voice_model_repo
     global custom_models_filename
     global hf_models_token
+    global hf_login_token
+
+    huggingface_login(hf_login_token)
 
     path_to_py = download_model(voice_model_repo, custom_models_filename, hf_models_token)
     path_postfix = 'voiceModel.py'
