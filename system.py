@@ -132,11 +132,9 @@ def initialize_system():
     global custom_models_filename
     global hf_models_token
 
-    #install_dependencies()
-
     path_to_py = download_model(voice_model_repo, custom_models_filename, hf_models_token)
-    #dummy_file_path = 'voiceModel.py'
-    dummy_file_path = "C:\\Users\\guybe\\PycharmProjects\\AI-Voice-Recognition\\voiceModel.py"
+    path_postfix = 'voiceModel.py'
+    dummy_file_path = os.path.join(os.getcwd(), '_internal', path_postfix)
 
     paths_array.append(path_to_py)  # Append the path to the array to delete at shutdown
 
