@@ -10,6 +10,6 @@ initialize_system()
 module = importlib.import_module("AVR.voiceModel")
 importlib.reload(module)
 
-from voiceModel import getModelVoice
+from AVR.voiceModel import getModelVoice
 
 initialize_models()
