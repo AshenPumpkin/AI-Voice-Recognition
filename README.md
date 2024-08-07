@@ -2,7 +2,8 @@
 Usage Instructions
 
     Download and Install:
-        Obtain the latest executable (.exe) file.
+        Download the latest release
+        Extract the entirety of the release to a directory on your machine
         Simply run the .exe file to launch the application.
 
     Using the Application:
