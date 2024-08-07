@@ -1,9 +1,16 @@
 # Import necessary libraries
-from system import initialize_models
+from system import initialize_models, initialize_system
 from UI import AudioClassifierApp
 import sys
 from PyQt5.QtWidgets import QApplication
 import warnings
+import importlib
+
+initialize_system()
+
+module = importlib.import_module("voiceModel")
+importlib.reload(module)
+
 from voiceModel import getModelVoice
 
 
