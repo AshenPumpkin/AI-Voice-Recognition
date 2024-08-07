@@ -36,7 +36,7 @@ def initialize_models():
     huggingface_login(hf_login_token)
 
     # Define the path to the folder
-    folder_path = 'Models'
+    folder_path = 'AVR/Models'
 
     # Download the models
     voice_model_path = download_model(voice_model_repo, voice_model_filename, hf_models_token)
@@ -61,16 +61,16 @@ def initialize_models():
         os.makedirs(folder_path)
 
     # Save models to Models folder
-    torch.save(voice_model, 'Models/voice_model.pth', pickle_module=dill)
-    torch.save(specto_model, 'Models/specto_model.pth')
-    torch.save(ensemble_model, 'Models/ensemble_model.pth')
+    torch.save(voice_model, 'AVR/Models/voice_model.pth', pickle_module=dill)
+    torch.save(specto_model, 'AVR/Models/specto_model.pth')
+    torch.save(ensemble_model, 'AVR/Models/ensemble_model.pth')
 
     # Append the paths to the array to delete at shutdown
     paths_array.append('Models/voice_model.pth')
     paths_array.append('Models/specto_model.pth')
     paths_array.append('Models/ensemble_model.pth')
 
-    print("Initialization complete")
+    print("AVR: Initialization complete")
 
 
 # Download a model from Hugging Face Hub
@@ -132,11 +132,8 @@ def initialize_system():
     global custom_models_filename
     global hf_models_token
 
-    #install_dependencies()
-
     path_to_py = download_model(voice_model_repo, custom_models_filename, hf_models_token)
-    #dummy_file_path = 'voiceModel.py'
-    dummy_file_path = "C:\\Users\\guybe\\PycharmProjects\\AI-Voice-Recognition\\voiceModel.py"
+    dummy_file_path = 'voiceModel.py'
 
     paths_array.append(path_to_py)  # Append the path to the array to delete at shutdown
 
