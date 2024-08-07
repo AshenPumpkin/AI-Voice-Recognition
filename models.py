@@ -3,15 +3,13 @@ import torch
 import librosa as lb
 import numpy as np
 
-###
-# Check lines 51, 61 for an unused variables
-###
 
 # Utility function to compute mel spectrogram
 def get_spectrogram(wav_file, sample_rate):
     mel_spectrogram = lb.feature.melspectrogram(y=wav_file, sr=sample_rate)
     mel_spectrogram_db = lb.power_to_db(mel_spectrogram, ref=np.max)
     return np.expand_dims(mel_spectrogram_db, axis=0)
+
 
 # Function to process the audio file and classify it using pre-trained models
 def query_function(file_path):
@@ -47,19 +45,11 @@ def query_function(file_path):
         specto_output = specto_model(specto_input)
     specto_probs = torch.exp(specto_output)
 
-    # Calculate spectrogram model probabilities
-    specto_percentage = specto_probs / torch.sum(specto_probs) * 100
-    specto_percentage_list = specto_percentage.cpu().numpy().flatten().tolist()
-
     # Run the waveform and sample rate through the voice model
     voice_input = wav_and_samp_t.unsqueeze(0)
     with torch.no_grad():
         voice_output = voice_model(voice_input)
     voice_probs = torch.exp(voice_output)
-
-    # Calculate voice model probabilities
-    voice_percentage = voice_probs / torch.sum(voice_probs) * 100
-    voice_percentage_list = voice_percentage.cpu().numpy().flatten().tolist()
 
     # Extract spoof and not-spoof probabilities from the models
     specto_probs_spoof = specto_probs[0,1]
@@ -83,8 +73,6 @@ def query_function(file_path):
 
     # Return the final classification result
     result = "The audio file is spoof." if ensemble_prediction == 0 else "The audio file is bona-fide."
-
-    # Prepare voice_percentage_list and specto_percentage_list for the result
     return result
 
 

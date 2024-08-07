@@ -1,5 +1,5 @@
 # Import necessary libraries
-from huggingface_hub import hf_hub_download, login
+from huggingface_hub import hf_hub_download, login, logout
 import os
 import torch
 import subprocess
@@ -17,7 +17,6 @@ ensemble_model_repo = 'gbenari2/ensemble'
 voice_model_filename = 'voiceModel.pth'
 specto_model_filename = 'spectoModel.pth'
 ensemble_model_filename = 'ensembleModel.pth'
-custom_models_filename = 'Voice_model_loader.py'
 
 
 # Initialize the models
@@ -31,7 +30,8 @@ def initialize_models():
     global voice_model_filename
     global specto_model_filename
     global ensemble_model_filename
-    global custom_models_filename
+
+    huggingface_login()
 
     # Define the path to the folder
     folder_path = 'Models'
@@ -87,9 +87,10 @@ def install_dependencies():
 
 
 # Log in to Hugging Face
-def huggingface_login(token):
+def huggingface_login():
+    global hf_login_token
     try:
-        login(token)
+        login(hf_login_token)
     except Exception as e:
         print("An unexpected error occurred while executing the process.")
         print(e)
@@ -97,17 +98,13 @@ def huggingface_login(token):
 
 # Logout from Hugging Face
 def logout_huggingface():
-    subprocess.run(['huggingface-cli', 'logout'])
+    logout()
 
 
 # Clean up the system
 def clean():
     global dummy_contents
     global paths_array
-
-    # Reset the dummy file
-    with open('voiceModel.py', 'w') as f:
-        f.write(dummy_contents)
 
     # Remove the downloaded files
     for path in paths_array:
@@ -120,38 +117,3 @@ def clean():
 
     # Logout from huggingface
     logout_huggingface()
-
-
-# Initialize the system
-def initialize_system():
-    global dummy_contents
-    global paths_array
-    global voice_model_repo
-    global custom_models_filename
-    global hf_models_token
-    global hf_login_token
-
-    huggingface_login(hf_login_token)
-
-    path_to_py = download_model(voice_model_repo, custom_models_filename, hf_models_token)
-    path_postfix = 'voiceModel.py'
-    dummy_file_path = os.path.join(os.getcwd(), '_internal', path_postfix)
-
-    paths_array.append(path_to_py)  # Append the path to the array to delete at shutdown
-
-    # Import the getModelVoice class from the downloaded file
-    try:
-        # Read the content of the downloaded file
-        with open(path_to_py, 'r') as downloaded_file:
-            downloaded_content = downloaded_file.read()
-
-        with open(dummy_file_path, 'r') as dummy_read_file:
-            dummy_contents = dummy_read_file.read()
-
-        # Replace the content of the dummy file with the downloaded content
-        with open(dummy_file_path, 'w') as dummy_file:
-            dummy_file.write(downloaded_content)
-
-        print("Module imported successfully.")
-    except ModuleNotFoundError as e:
-        print(f"Error importing model: {e}\nInstead, loading hardcoded archtiecture.")
