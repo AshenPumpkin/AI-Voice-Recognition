@@ -23,7 +23,6 @@ custom_models_filename = 'Voice_model_loader.py'
 # Initialize the models
 def initialize_models():
     global paths_array
-    global hf_login_token
     global  hf_models_token
     global voice_model_repo
     global specto_model_repo
@@ -32,8 +31,6 @@ def initialize_models():
     global specto_model_filename
     global ensemble_model_filename
     global custom_models_filename
-
-    huggingface_login(hf_login_token)
 
     # Define the path to the folder
     folder_path = 'Models'
@@ -131,12 +128,15 @@ def initialize_system():
     global voice_model_repo
     global custom_models_filename
     global hf_models_token
+    global hf_login_token
 
-    #install_dependencies()
+    install_dependencies()
+
+    huggingface_login(hf_login_token)
+
 
     path_to_py = download_model(voice_model_repo, custom_models_filename, hf_models_token)
-    #dummy_file_path = 'voiceModel.py'
-    dummy_file_path = "C:\\Users\\guybe\\PycharmProjects\\AI-Voice-Recognition\\voiceModel.py"
+    dummy_file_path = 'voiceModel.py'
 
     paths_array.append(path_to_py)  # Append the path to the array to delete at shutdown
 

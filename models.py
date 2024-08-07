@@ -47,19 +47,11 @@ def query_function(file_path):
         specto_output = specto_model(specto_input)
     specto_probs = torch.exp(specto_output)
 
-    # Calculate spectrogram model probabilities
-    specto_percentage = specto_probs / torch.sum(specto_probs) * 100
-    specto_percentage_list = specto_percentage.cpu().numpy().flatten().tolist()
-
     # Run the waveform and sample rate through the voice model
     voice_input = wav_and_samp_t.unsqueeze(0)
     with torch.no_grad():
         voice_output = voice_model(voice_input)
     voice_probs = torch.exp(voice_output)
-
-    # Calculate voice model probabilities
-    voice_percentage = voice_probs / torch.sum(voice_probs) * 100
-    voice_percentage_list = voice_percentage.cpu().numpy().flatten().tolist()
 
     # Extract spoof and not-spoof probabilities from the models
     specto_probs_spoof = specto_probs[0,1]
