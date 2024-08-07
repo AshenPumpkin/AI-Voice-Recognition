@@ -3,15 +3,13 @@ import torch
 import librosa as lb
 import numpy as np
 
-###
-# Check lines 51, 61 for an unused variables
-###
 
 # Utility function to compute mel spectrogram
 def get_spectrogram(wav_file, sample_rate):
     mel_spectrogram = lb.feature.melspectrogram(y=wav_file, sr=sample_rate)
     mel_spectrogram_db = lb.power_to_db(mel_spectrogram, ref=np.max)
     return np.expand_dims(mel_spectrogram_db, axis=0)
+
 
 # Function to process the audio file and classify it using pre-trained models
 def query_function(file_path):
@@ -75,8 +73,6 @@ def query_function(file_path):
 
     # Return the final classification result
     result = "The audio file is spoof." if ensemble_prediction == 0 else "The audio file is bona-fide."
-
-    # Prepare voice_percentage_list and specto_percentage_list for the result
     return result
 
 

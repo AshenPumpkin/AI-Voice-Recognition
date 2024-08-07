@@ -81,7 +81,6 @@ class AudioClassifierApp(QWidget):
         init_dialog.setStandardButtons(QMessageBox.NoButton)
         init_dialog.show()
         initialize_models()
-        self.models_initialized = True
         init_dialog.accept()
 
     def open_website(self):
