@@ -5,11 +5,7 @@ import torch
 import subprocess
 import sys
 import dill
-from .voiceModel import getModelVoice
-
-# Register the getModelVoice class with dill
-dill.extend(use_dill=True)
-dill.register(getModelVoice)
+import warnings
 
 
 # Global variables
@@ -38,9 +34,6 @@ def initialize_models():
     global specto_model_filename
     global ensemble_model_filename
     global custom_models_filename
-
-    # log in to huggingface
-    huggingface_login(hf_login_token)
 
     # Define the path to the folder
     folder_path = 'AVR/Models'
@@ -96,11 +89,28 @@ def install_dependencies():
 # Log in to Hugging Face
 def huggingface_login(token):
     try:
-        login(token)
+        # Save the current stdout and stderr
+        original_stdout = sys.stdout
+        original_stderr = sys.stderr
+
+        # Redirect stdout and stderr to null
+        sys.stdout = open(os.devnull, 'w')
+        sys.stderr = open(os.devnull, 'w')
+
+        # Perform the login
+        login(token, add_to_git_credential=False)
+
     except Exception as e:
+        # Restore stdout and stderr before printing the error
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
         print("An unexpected error occurred while executing the process.")
         print(e)
 
+    finally:
+        # Restore stdout and stderr after the login
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
 
 # Logout from Hugging Face
 def logout_huggingface():
@@ -113,7 +123,7 @@ def clean():
     global paths_array
 
     # Reset the dummy file
-    with open('voiceModel.py', 'w') as f:
+    with open('AVR/voiceModel.py', 'w') as f:
         f.write(dummy_contents)
 
     # Remove the downloaded files
@@ -137,14 +147,18 @@ def initialize_system():
     global custom_models_filename
     global hf_models_token
 
+    # Ignore futurewarning from torch.load and huggingface model download warning about symlink
+    warnings.filterwarnings("ignore")
+
+    # log in to huggingface
+    huggingface_login(hf_login_token)
+
     # Download the voice model
     path_to_py = download_model(voice_model_repo, custom_models_filename, hf_models_token)
 
-    # Get the directory of the current file
-    module_dir = os.path.dirname(__file__)
 
     # Define the path to the dummy file
-    dummy_file_path = os.path.join(module_dir, 'voiceModel.py')
+    dummy_file_path = 'AVR/voiceModel.py'
 
     # Append the path to the array to delete at shutdown
     paths_array.append(path_to_py)
@@ -161,17 +175,6 @@ def initialize_system():
         # Replace the content of the dummy file with the downloaded content
         with open(dummy_file_path, 'w') as dummy_file:
             dummy_file.write(downloaded_content)
-
-
-        # Import the module dynamically
-        import importlib.util
-        spec = importlib.util.spec_from_file_location("voiceModel", dummy_file_path)
-        voice_model_module = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(voice_model_module)
-
-        # Get the getModelVoice class from the module
-        global getModelVoice
-        getModelVoice = voice_model_module.getModelVoice
 
         print("Module imported successfully.")
     except ModuleNotFoundError as e:

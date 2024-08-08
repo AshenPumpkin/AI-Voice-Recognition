@@ -2,16 +2,16 @@ from setuptools import setup, find_packages
 
 setup(
     name='AVR',
-    version='0.1.0',
+    version='0.3.0',
     packages=find_packages(include=['AVR', 'AVR.*']),
     install_requires=[
         'librosa >= 0.10.1',
         'matplotlib >= 3.7.3',
         'numpy >= 1.24.0',
         'pandas >= 2.1.0',
-        'torch == 2.4.0',
-        'torchvision == 0.19.0',
-        'torchaudio == 2.4.0',
+        'torch == 2.3.1',
+        'torchvision == 0.18.1',
+        'torchaudio == 2.3.1',
         'scipy >= 1.11.2',
         'soundfile >= 0.12.1',
         'setuptools >= 65.5.0',
