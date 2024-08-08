@@ -5,6 +5,11 @@ import torch
 import subprocess
 import sys
 import dill
+from .voiceModel import getModelVoice
+
+dill.extend(use_dill=True)
+dill.register(getModelVoice)
+
 
 # Global variables
 paths_array = []
@@ -48,12 +53,10 @@ def initialize_models():
     paths_array.append(specto_model_path)
     paths_array.append(ensemble_model_path)
 
-    try:
-        voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'))
-        specto_model = torch.load(specto_model_path, map_location=torch.device('cpu'))
-        ensemble_model = torch.load(ensemble_model_path, map_location=torch.device('cpu'))
-    except Exception as e:
-        print(f"Failed to load the models. Error: {e}")
+
+    voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'), pickle_module=dill)
+    specto_model = torch.load(specto_model_path, map_location=torch.device('cpu'), pickle_module=dill)
+    ensemble_model = torch.load(ensemble_model_path, map_location=torch.device('cpu'), pickle_module=dill)
 
     # Check if the folder exists
     if not os.path.exists(folder_path):
@@ -62,8 +65,8 @@ def initialize_models():
 
     # Save models to Models folder
     torch.save(voice_model, 'AVR/Models/voice_model.pth', pickle_module=dill)
-    torch.save(specto_model, 'AVR/Models/specto_model.pth')
-    torch.save(ensemble_model, 'AVR/Models/ensemble_model.pth')
+    torch.save(specto_model, 'AVR/Models/specto_model.pth', pickle_module=dill)
+    torch.save(ensemble_model, 'AVR/Models/ensemble_model.pth', pickle_module=dill)
 
     # Append the paths to the array to delete at shutdown
     paths_array.append('Models/voice_model.pth')
@@ -133,7 +136,8 @@ def initialize_system():
     global hf_models_token
 
     path_to_py = download_model(voice_model_repo, custom_models_filename, hf_models_token)
-    dummy_file_path = 'AVR/voiceModel.py'
+    module_dir = os.path.dirname(__file__)  # Get the directory of the current file
+    dummy_file_path = os.path.join(module_dir, 'voiceModel.py')
 
     paths_array.append(path_to_py)  # Append the path to the array to delete at shutdown
 
@@ -149,6 +153,16 @@ def initialize_system():
         # Replace the content of the dummy file with the downloaded content
         with open(dummy_file_path, 'w') as dummy_file:
             dummy_file.write(downloaded_content)
+
+
+        # Import the module dynamically
+        import importlib.util
+        spec = importlib.util.spec_from_file_location("voiceModel", dummy_file_path)
+        voice_model_module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(voice_model_module)
+
+        global getModelVoice
+        getModelVoice = voice_model_module.getModelVoice
 
         print("Module imported successfully.")
     except ModuleNotFoundError as e:

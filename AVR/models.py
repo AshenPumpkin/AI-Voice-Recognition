@@ -2,6 +2,7 @@
 import torch
 import librosa as lb
 import numpy as np
+import dill
 
 
 # Utility function to compute mel spectrogram
@@ -29,9 +30,9 @@ def query_function(file_path):
     mel_t = torch.tensor(mel, dtype=torch.float32)
 
     # Load the pre-trained models and map them to CPU
-    voice_model = torch.load("AVR/Models/voice_model.pth", map_location=torch.device('cpu'))
-    specto_model = torch.load("AVR/Models/specto_model.pth", map_location=torch.device('cpu'))
-    ensemble_model = torch.load("AVR/Models/ensemble_model.pth", map_location=torch.device('cpu'))
+    voice_model = torch.load("AVR/Models/voice_model.pth", map_location=torch.device('cpu'), pickle_module=dill)
+    specto_model = torch.load("AVR/Models/specto_model.pth", map_location=torch.device('cpu'), pickle_module=dill)
+    ensemble_model = torch.load("AVR/Models/ensemble_model.pth", map_location=torch.device('cpu'), pickle_module=dill)
 
     # Set models to evaluation mode
     voice_model.eval()
