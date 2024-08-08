@@ -1,11 +1,11 @@
 import torch
 import torch.nn as nn
 
-#dummy model. actual model will be loaded from huggingface during runtime
+# Dummy model
+# This model is a placeholder for the actual model that will be downloaded from Hugging Face during initialization
 class getModelVoice(nn.Module):
     def __init__(self):
         pass
-
  
     def forward(self):
         pass
