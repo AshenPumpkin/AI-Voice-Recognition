@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name='AVR',
-    version='0.3.0',
+    version='0.3.5',
     packages=find_packages(include=['AVR', 'AVR.*']),
     install_requires=[
         'librosa >= 0.10.1',
