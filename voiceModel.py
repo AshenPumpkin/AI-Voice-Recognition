@@ -1,7 +1,7 @@
 import torch
 import torch.nn as nn
 
-
+# Define the model
 class getModelVoice(nn.Module):
     def __init__(self, input_size=96334, hidden_size=128, num_layers=2, num_classes=2):
         super(getModelVoice, self).__init__()

@@ -31,7 +31,8 @@ def initialize_models():
     global specto_model_filename
     global ensemble_model_filename
 
-    huggingface_login()
+    # log into huggingface
+    huggingface_login(hf_login_token)
 
     # Define the path to the folder
     folder_path = 'Models'
@@ -46,6 +47,7 @@ def initialize_models():
     paths_array.append(specto_model_path)
     paths_array.append(ensemble_model_path)
 
+    # Load the models
     try:
         voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'))
         specto_model = torch.load(specto_model_path, map_location=torch.device('cpu'))
@@ -87,19 +89,38 @@ def install_dependencies():
 
 
 # Log in to Hugging Face
-def huggingface_login():
-    global hf_login_token
+def huggingface_login(token):
     try:
-        login(hf_login_token)
+        # Save the current stdout and stderr
+        original_stdout = sys.stdout
+        original_stderr = sys.stderr
+
+        # Redirect stdout and stderr to null
+        sys.stdout = open(os.devnull, 'w')
+        sys.stderr = open(os.devnull, 'w')
+
+        # Perform the login
+        login(token)
+
     except Exception as e:
+        # Restore stdout and stderr before printing the error
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
         print("An unexpected error occurred while executing the process.")
         print(e)
+
+    finally:
+        # Restore stdout and stderr after the login
+        sys.stdout = original_stdout
+        sys.stderr = original_stderr
 
 
 # Logout from Hugging Face
 def logout_huggingface():
-    logout()
-
+    try:
+        logout()
+    except FileNotFoundError as e:
+        pass
 
 # Clean up the system
 def clean():

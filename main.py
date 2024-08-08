@@ -6,7 +6,7 @@ from PyQt5.QtWidgets import QApplication
 import warnings
 from voiceModel import getModelVoice
 
-
+# Main function to initialize the models and run the application
 def main():
     # Suppress future warnings to clean up the console output
     warnings.filterwarnings("ignore", category=FutureWarning)
@@ -19,6 +19,6 @@ def main():
     ex = AudioClassifierApp()
     sys.exit(app.exec_())
 
-
+# Entry point of the application
 if __name__ == '__main__':
     main()
