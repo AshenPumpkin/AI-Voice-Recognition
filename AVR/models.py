@@ -74,6 +74,9 @@ def query_function(file_path):
     # Return the final classification result
     result = False if ensemble_prediction == 0 else True
 
+    print("AVR: Classification complete")
+    print("Don't forget to flush the system after use using the flush() function")
+    print("Otherwise, the system will take up unnecessary memory")
     return result
 
 

@@ -7,6 +7,7 @@ import sys
 import dill
 from .voiceModel import getModelVoice
 
+# Register the getModelVoice class with dill
 dill.extend(use_dill=True)
 dill.register(getModelVoice)
 
@@ -38,6 +39,7 @@ def initialize_models():
     global ensemble_model_filename
     global custom_models_filename
 
+    # log in to huggingface
     huggingface_login(hf_login_token)
 
     # Define the path to the folder
@@ -53,7 +55,7 @@ def initialize_models():
     paths_array.append(specto_model_path)
     paths_array.append(ensemble_model_path)
 
-
+    # Load the models
     voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'), pickle_module=dill)
     specto_model = torch.load(specto_model_path, map_location=torch.device('cpu'), pickle_module=dill)
     ensemble_model = torch.load(ensemble_model_path, map_location=torch.device('cpu'), pickle_module=dill)
@@ -135,11 +137,17 @@ def initialize_system():
     global custom_models_filename
     global hf_models_token
 
+    # Download the voice model
     path_to_py = download_model(voice_model_repo, custom_models_filename, hf_models_token)
-    module_dir = os.path.dirname(__file__)  # Get the directory of the current file
+
+    # Get the directory of the current file
+    module_dir = os.path.dirname(__file__)
+
+    # Define the path to the dummy file
     dummy_file_path = os.path.join(module_dir, 'voiceModel.py')
 
-    paths_array.append(path_to_py)  # Append the path to the array to delete at shutdown
+    # Append the path to the array to delete at shutdown
+    paths_array.append(path_to_py)
 
     # Import the getModelVoice class from the downloaded file
     try:
@@ -161,6 +169,7 @@ def initialize_system():
         voice_model_module = importlib.util.module_from_spec(spec)
         spec.loader.exec_module(voice_model_module)
 
+        # Get the getModelVoice class from the module
         global getModelVoice
         getModelVoice = voice_model_module.getModelVoice
 
