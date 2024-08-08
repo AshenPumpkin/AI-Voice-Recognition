@@ -1,5 +1,5 @@
 # Import necessary libraries
-from huggingface_hub import hf_hub_download, login
+from huggingface_hub import hf_hub_download, login, logout
 import os
 import torch
 import subprocess
@@ -64,9 +64,9 @@ def initialize_models():
     torch.save(ensemble_model, 'AVR/Models/ensemble_model.pth', pickle_module=dill)
 
     # Append the paths to the array to delete at shutdown
-    paths_array.append('Models/voice_model.pth')
-    paths_array.append('Models/specto_model.pth')
-    paths_array.append('Models/ensemble_model.pth')
+    paths_array.append('AVR/Models/voice_model.pth')
+    paths_array.append('AVR/Models/specto_model.pth')
+    paths_array.append('AVR/Models/ensemble_model.pth')
 
     print("AVR: Initialization complete")
 
@@ -98,7 +98,7 @@ def huggingface_login(token):
         sys.stderr = open(os.devnull, 'w')
 
         # Perform the login
-        login(token, add_to_git_credential=False)
+        login(token)
 
     except Exception as e:
         # Restore stdout and stderr before printing the error
@@ -114,7 +114,10 @@ def huggingface_login(token):
 
 # Logout from Hugging Face
 def logout_huggingface():
-    subprocess.run(['huggingface-cli', 'logout'])
+    try:
+        logout()
+    except FileNotFoundError as e:
+        pass
 
 
 # Clean up the system
@@ -122,8 +125,14 @@ def clean():
     global dummy_contents
     global paths_array
 
+    # Define the path to the dummy file
+    module_dir = os.path.dirname(__file__)
+
+    # Define the path to the dummy file
+    dummy_file_path = os.path.join(module_dir, 'voiceModel.py')
+
     # Reset the dummy file
-    with open('AVR/voiceModel.py', 'w') as f:
+    with open(dummy_file_path, 'w') as f:
         f.write(dummy_contents)
 
     # Remove the downloaded files
@@ -137,6 +146,7 @@ def clean():
 
     # Logout from huggingface
     logout_huggingface()
+    print("AVR system cleaned.")
 
 
 # Initialize the system
@@ -158,7 +168,10 @@ def initialize_system():
 
 
     # Define the path to the dummy file
-    dummy_file_path = 'AVR/voiceModel.py'
+    module_dir = os.path.dirname(__file__)
+
+    # Define the path to the dummy file
+    dummy_file_path = os.path.join(module_dir, 'voiceModel.py')
 
     # Append the path to the array to delete at shutdown
     paths_array.append(path_to_py)
