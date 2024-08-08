@@ -8,10 +8,13 @@ from system import clean, initialize_models
 
 # Create the main application window
 class AudioClassifierApp(QWidget):
+
+    # Initialize the application window
     def __init__(self):
         super().__init__()
         self.init_ui()
 
+    # Create the user interface
     def init_ui(self):
         self.setWindowTitle('AI Voice Recognize')
         self.setFixedSize(500, 400)
@@ -32,6 +35,7 @@ class AudioClassifierApp(QWidget):
         self.setLayout(layout)
         self.show()
 
+    # Display the file dialog to select an audio file
     def show_dialog(self):
         options = QFileDialog.Options()
         file_path, _ = QFileDialog.getOpenFileName(
@@ -44,6 +48,7 @@ class AudioClassifierApp(QWidget):
         if file_path:
             self.process_file(file_path)
 
+    # Process the selected audio file
     def process_file(self, file_path):
         processing_dialog = QMessageBox(self)
         processing_dialog.setWindowTitle("Processing audio")
@@ -54,6 +59,7 @@ class AudioClassifierApp(QWidget):
 
         QApplication.processEvents()  # Allow UI to update
 
+        # Query the AI model with the selected audio file
         try:
             result = query_function(file_path)
             processing_dialog.accept()  # Close dialog after processing
@@ -63,17 +69,21 @@ class AudioClassifierApp(QWidget):
             processing_dialog.close()  # Close dialog if an error occurs
             self.show_error(str(e))
 
+    # Display the classification result
     def show_result(self, result):
         QMessageBox.information(self, "AVR audio file prediction results:", result)
 
+    # Display an error message
     def show_error(self, error_message):
         QMessageBox.critical(self, "Error", f"An error occurred: {error_message}")
         print(f"Error during classification: {error_message}")
 
+    # Close the application
     def close_app(self):
         clean()
         QApplication.instance().quit()
 
+    # Initialize the AI models
     def initialize_models(self):
         init_dialog = QMessageBox(self)
         init_dialog.setWindowTitle("Initializing system")
@@ -83,10 +93,12 @@ class AudioClassifierApp(QWidget):
         initialize_models()
         init_dialog.accept()
 
+    # Open the AVR website
     def open_website(self):
         url = "https://ashenpumpkin.github.io/AI-Voice-Recognition/"
         QDesktopServices.openUrl(QUrl(url))
 
+    # Handle the close event such that the system is cleaned up
     def closeEvent(self, event: QCloseEvent):
         self.close_app()
         event.accept()

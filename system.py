@@ -45,6 +45,7 @@ def initialize_models():
     paths_array.append(specto_model_path)
     paths_array.append(ensemble_model_path)
 
+    # Load the models
     try:
         voice_model = torch.load(voice_model_path, map_location=torch.device('cpu'))
         specto_model = torch.load(specto_model_path, map_location=torch.device('cpu'))

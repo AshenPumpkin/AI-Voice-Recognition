@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import QApplication
 import warnings
 import importlib
 
+# Initialize the system, and reload the voiceModel module
 initialize_system()
 
 module = importlib.import_module("voiceModel")
