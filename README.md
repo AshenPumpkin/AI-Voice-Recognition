@@ -11,6 +11,12 @@ Usage Instructions
         Use the graphical interface to upload audio files.
         The system will process the audio and display whether it is genuine or spoofed.
 
+    Using the Library:
+        Download the .tar.gz file or input "pip install AVR" into your CMD
+        in a .py or .ipynb file add "import AVR"
+        now you can use AVR.query_function() with the path to your file as input. and the function will return the prediction value, True for a bona-fide voice sample, and False for a spoofed voice.
+        Remember to use AVR.flush() after use to free up the model memory from your system.
+
 Overview
 
 The AI Voice Recognize (AVR) project, developed by Guy Ben Ari and Ynon Friedman from Afeka College of Engineering, focuses on detecting spoofed audio files and distinguishing them from genuine human voices using advanced machine learning techniques.
@@ -48,4 +54,4 @@ Contact
 For inquiries or collaboration:
 
     Guy Ben Ari: gbenari2@gmail.com
-    Ynon Friedman: ynonfridman@gmai.com
+    Ynon Friedman: ynonfridman@gmaiL.com
